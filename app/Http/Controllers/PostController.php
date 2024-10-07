@@ -87,7 +87,6 @@ class PostController extends Controller
      */
     public function edit(Post $post)
     {
-        $post->load('source', 'previewImage');
 
         return Inertia::render('Post/Edit', ['sources' => Source::all(['id', 'name']), 'post' => $post]);
     }
