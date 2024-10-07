@@ -13,10 +13,9 @@ return new class extends Migration
     {
         Schema::create('media', function (Blueprint $table) {
             $table->id();
-            $table->string('filename');
-            $table->string('url');
+            $table->string('path');
 
-            $table->foreignId('post_id')->constrained(table: 'posts');
+            $table->foreignId('post_id')->nullable()->constrained(table: 'posts');
             $table->timestamps();
         });
     }

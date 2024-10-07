@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Post\StoreRequest;
+use App\Models\Media;
 use App\Models\Post;
 use App\Models\Source;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -37,9 +39,39 @@ class PostController extends Controller
     {
         $validatedData = $request->validated();
 
-        $post = Post::create($validatedData);
+        // Needed to have post id for redirect.
+        $post_id = null;
+        DB::transaction(function () use ($validatedData, &$post_id) {
+            $post = Post::create([
+                'title' => $validatedData['title'],
+                'description' => $validatedData['description'],
+                'slug' => $validatedData['slug'],
+            ]);
 
-        return to_route('post.edit', $post->id)->with('toasts', ['kind' => 'success', 'message' => 'Post created successfully.']);
+            if (! empty($validatedData['source_id'])) {
+                $post->source_id = $validatedData['source_id'];
+            } else {
+                $source = Source::create([
+                    'name' => $validatedData['source_name'],
+                    'url' => $validatedData['source_url'],
+                ]);
+                $post->source_id = $source->id;
+            }
+
+            if (! empty($validatedData['preview_image'])) {
+                $path = $validatedData['preview_image']->store('posts');
+                $media = Media::create([
+                    'path' => $path,
+                ]);
+                $post->preview_image_id = $media->id;
+            }
+
+            $post->save();
+
+            $post_id = $post->id;
+        });
+
+        return to_route('post.edit', ['post' => $post_id])->with('toasts', ['kind' => 'success', 'message' => 'Post created successfully.']);
     }
 
     /**
@@ -55,7 +87,9 @@ class PostController extends Controller
      */
     public function edit(Post $post)
     {
-        //
+        $post->load('source', 'previewImage');
+
+        return Inertia::render('Post/Edit', ['sources' => Source::all(['id', 'name']), 'post' => $post]);
     }
 
     /**

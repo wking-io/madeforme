@@ -13,14 +13,17 @@ export default function PostCreate({
     sources?: Array<{ id: string; name: string }>;
 }) {
     const [showNewSource, setShowNewSource] = useState(!sources?.length);
-    const { data, setData, post } = useForm({
+    const { data, setData, post, errors } = useForm({
         title: "",
         description: "",
         slug: "",
-        source_id: "",
+        source_id: sources?.[0]?.id ?? "",
         source_name: "",
         source_url: "",
+        preview_image: undefined as File | undefined,
     });
+
+    console.log(errors);
 
     const handleSubmit: FormEventHandler<HTMLFormElement> = useCallback(
         (e) => {
@@ -50,7 +53,11 @@ export default function PostCreate({
             }
         >
             <Head title="Create Post" />
-            <form onSubmit={handleSubmit} className="flex flex-col">
+            <form
+                onSubmit={handleSubmit}
+                className="flex flex-col"
+                encType="multipart/form-data"
+            >
                 <label>Title</label>
                 <input
                     type="text"
@@ -103,6 +110,13 @@ export default function PostCreate({
                         />
                     </>
                 ) : null}
+                <input
+                    type="file"
+                    name="preview_image"
+                    onChange={(e) => {
+                        setData("preview_image", e.target.files?.[0]);
+                    }}
+                />
                 <button type="submit">Save Post</button>
             </form>
         </AuthenticatedLayout>

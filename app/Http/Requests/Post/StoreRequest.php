@@ -23,7 +23,11 @@ class StoreRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
-            'slug' => ['required', 'string', 'max:255', Rule::unique(Post::class, 'slug')],
+            'slug' => ['required', 'string', 'alpha_dash:ascii', 'max:255', Rule::unique(Post::class, 'slug')],
+            'source_id' => ['nullable', 'exists:sources,id'],
+            'source_name' => ['required_without:source_id', 'nullable', 'string', 'max:255'],
+            'source_url' => ['required_without:source_id', 'nullable', 'url'],
+            'preview_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         ];
     }
 }
