@@ -1,15 +1,8 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link } from "@inertiajs/react";
+import { PostSummary } from "@/types/app";
 
-export default function Posts({
-    posts,
-}: {
-    posts: Array<{
-        id: string;
-        title: string;
-        description: string;
-    }>;
-}) {
+export default function Posts({ posts }: { posts: Array<PostSummary> }) {
     return (
         <AuthenticatedLayout
             header={

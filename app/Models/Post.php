@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Post extends Model
 {
@@ -25,14 +24,14 @@ class Post extends Model
         return $this->belongsTo(Source::class, 'source_id');
     }
 
-    public function previewImage(): HasOne
+    public function previewImage(): BelongsTo
     {
-        return $this->hasOne(Media::class, 'preview_image_id');
+        return $this->belongsTo(Media::class, 'preview_image_id');
     }
 
-    public function previewVideo(): HasOne
+    public function previewVideo(): BelongsTo
     {
-        return $this->hasOne(Media::class, 'preview_video_id');
+        return $this->belongsTo(Media::class, 'preview_video_id');
     }
 
     public function media(): HasMany
@@ -43,5 +42,10 @@ class Post extends Model
     public function bookmarks(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'bookmarks');
+    }
+
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class);
     }
 }

@@ -29,9 +29,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/posts', [PostController::class, 'index'])->name('post.index');
     Route::get('/admin/posts/create', [PostController::class, 'create'])->name('post.create');
     Route::post('/admin/posts/create', [PostController::class, 'store'])->name('post.store');
-    Route::get('/admin/posts/{post}', [PostController::class, 'edit'])->name('post.edit');
-    Route::patch('/admin/posts/{post}', [PostController::class, 'update'])->name('post.update');
-    Route::delete('/admin/posts/{post}', [PostController::class, 'delete'])->name('post.delete');
+    Route::get('/admin/posts/{post:slug}', [PostController::class, 'edit'])->name('post.edit');
+    Route::patch('/admin/posts/{post:slug}', [PostController::class, 'update'])->name('post.update');
+    Route::delete('/admin/posts/{post:slug}', [PostController::class, 'delete'])->name('post.delete');
 });
 
 require __DIR__.'/auth.php';

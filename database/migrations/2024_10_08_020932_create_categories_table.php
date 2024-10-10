@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -12,18 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('posts', function (Blueprint $table) {
+        Schema::create('categories', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
+            $table->string('name');
             $table->string('slug')->unique()->index();
-            $table->text('description');
-            $table->text('status')->default('draft');
+            $table->text('description')->nullable();
+            $table->foreignId('parent_id')->nullable()->constrained('categories');
 
             $table->timestamps();
-
         });
-
-        DB::statement("ALTER TABLE posts ADD CONSTRAINT check_post_status CHECK (status IN ('draft', 'published'))");
     }
 
     /**
@@ -31,7 +27,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement('ALTER TABLE posts DROP CONSTRAINT check_post_status');
-        Schema::dropIfExists('posts');
+        Schema::table('categories', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('parent_id');
+        });
+        Schema::dropIfExists('categories');
     }
 };

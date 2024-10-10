@@ -1,4 +1,5 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { PostDetail, SourceData } from "@/types/app";
 import { Head, Link, useForm } from "@inertiajs/react";
 import {
     ChangeEventHandler,
@@ -8,16 +9,11 @@ import {
 } from "react";
 
 export default function PostEdit({
-    post,
+    post: { source, ...post },
     sources,
 }: {
-    post: {
-        title: string;
-        description: string;
-        slug: string;
-        source_id: string;
-    };
-    sources?: Array<{ id: string; name: string }>;
+    post: PostDetail;
+    sources: Array<SourceData>;
 }) {
     const [showNewSource, setShowNewSource] = useState(!sources?.length);
     const {
@@ -26,6 +22,7 @@ export default function PostEdit({
         post: makePost,
     } = useForm({
         ...post,
+        source_id: source.id,
         source_name: "",
         source_url: "",
     });
@@ -42,7 +39,7 @@ export default function PostEdit({
         useCallback((e) => {
             if (e.target.value === "new") {
                 setShowNewSource(true);
-                setData("source_id", "");
+                setData("source_id", null);
             } else {
                 setShowNewSource(false);
                 setData("source_id", e.target.value);
@@ -110,6 +107,9 @@ export default function PostEdit({
                             }}
                         />
                     </>
+                ) : null}
+                {post.preview_image_url ? (
+                    <img src={post.preview_image_url} alt="Preview" />
                 ) : null}
                 <button type="submit">Save Post</button>
             </form>

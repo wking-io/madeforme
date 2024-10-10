@@ -1,5 +1,6 @@
+import useForm from "@/hooks/use-form";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, Link, useForm } from "@inertiajs/react";
+import { Head } from "@inertiajs/react";
 import {
     ChangeEventHandler,
     FormEventHandler,
@@ -13,34 +14,28 @@ export default function PostCreate({
     sources?: Array<{ id: string; name: string }>;
 }) {
     const [showNewSource, setShowNewSource] = useState(!sources?.length);
-    const { data, setData, post, errors } = useForm({
-        title: "",
-        description: "",
-        slug: "",
-        source_id: sources?.[0]?.id ?? "",
-        source_name: "",
-        source_url: "",
-        preview_image: undefined as File | undefined,
-    });
+    const { submit, errors } = useForm();
 
     console.log(errors);
 
     const handleSubmit: FormEventHandler<HTMLFormElement> = useCallback(
         (e) => {
             e.preventDefault();
-            post("/admin/posts/create");
+            if (e.target instanceof HTMLFormElement) {
+                submit(e.target);
+            } else {
+                console.error("Form element not found");
+            }
         },
-        [post]
+        [submit]
     );
 
     const handleChangeSource: ChangeEventHandler<HTMLSelectElement> =
         useCallback((e) => {
-            if (e.target.value === "new") {
+            if (e.target.value === "") {
                 setShowNewSource(true);
-                setData("source_id", "");
             } else {
                 setShowNewSource(false);
-                setData("source_id", e.target.value);
             }
         }, []);
 
@@ -54,69 +49,34 @@ export default function PostCreate({
         >
             <Head title="Create Post" />
             <form
+                method="post"
                 onSubmit={handleSubmit}
                 className="flex flex-col"
                 encType="multipart/form-data"
             >
                 <label>Title</label>
-                <input
-                    type="text"
-                    value={data.title}
-                    onChange={(e) => {
-                        setData("title", e.target.value);
-                    }}
-                />
+                <input type="text" name="title" />
                 <label>Description</label>
-                <input
-                    type="text"
-                    value={data.description}
-                    onChange={(e) => {
-                        setData("description", e.target.value);
-                    }}
-                />
+                <input type="text" name="description" />
                 <label>Slug</label>
-                <input
-                    type="text"
-                    value={data.slug}
-                    onChange={(e) => {
-                        setData("slug", e.target.value);
-                    }}
-                />
-                <select onChange={handleChangeSource}>
+                <input type="text" name="slug" />
+                <select onChange={handleChangeSource} name="source[id]">
                     {sources?.map((source) => (
                         <option key={source.id} value={source.id}>
                             {source.name}
                         </option>
                     ))}
-                    <option value="new">New Source</option>
+                    <option value="">New Source</option>
                 </select>
                 {showNewSource ? (
                     <>
                         <label>Source Name</label>
-                        <input
-                            type="text"
-                            value={data.source_name}
-                            onChange={(e) => {
-                                setData("source_name", e.target.value);
-                            }}
-                        />
+                        <input type="text" name="source[name]" />
                         <label>Source URL</label>
-                        <input
-                            type="text"
-                            value={data.source_url}
-                            onChange={(e) => {
-                                setData("source_url", e.target.value);
-                            }}
-                        />
+                        <input type="text" name="source[url]" />
                     </>
                 ) : null}
-                <input
-                    type="file"
-                    name="preview_image"
-                    onChange={(e) => {
-                        setData("preview_image", e.target.files?.[0]);
-                    }}
-                />
+                <input type="file" name="preview_image" />
                 <button type="submit">Save Post</button>
             </form>
         </AuthenticatedLayout>

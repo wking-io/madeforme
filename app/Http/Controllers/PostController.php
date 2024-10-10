@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Post\StoreRequest;
-use App\Models\Media;
+use App\Models\Category;
 use App\Models\Post;
 use App\Models\Source;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,7 +21,9 @@ class PostController extends Controller
     {
         $posts = Post::all(['id', 'title', 'description']);
 
-        return Inertia::render('Post/Index', ['posts' => $posts]);
+        return Inertia::render('Post/Index', [
+            'posts' => $posts,
+        ]);
     }
 
     /**
@@ -29,7 +32,10 @@ class PostController extends Controller
     public function create(): Response
     {
         //
-        return Inertia::render('Post/Create', ['sources' => Source::all(['id', 'name'])]);
+        return Inertia::render('Post/Create', [
+            'sources' => Source::all(['id', 'name']),
+            // 'categories' => Category::all(['id', 'name']),
+        ]);
     }
 
     /**
@@ -37,41 +43,32 @@ class PostController extends Controller
      */
     public function store(StoreRequest $request)
     {
-        $validatedData = $request->validated();
-
         // Needed to have post id for redirect.
-        $post_id = null;
-        DB::transaction(function () use ($validatedData, &$post_id) {
-            $post = Post::create([
-                'title' => $validatedData['title'],
-                'description' => $validatedData['description'],
-                'slug' => $validatedData['slug'],
-            ]);
+        $post = DB::transaction(function () use ($request) {
+            $post = Post::make($request->postPayload());
 
-            if (! empty($validatedData['source_id'])) {
-                $post->source_id = $validatedData['source_id'];
-            } else {
-                $source = Source::create([
-                    'name' => $validatedData['source_name'],
-                    'url' => $validatedData['source_url'],
-                ]);
-                $post->source_id = $source->id;
+            $post->source()->associate($request->sourceId() ?? Source::create($request->sourcePayload()));
+
+            if ($request->hasPreviewImage()) {
+                $post->previewImage()->create($request->previewImagePayload());
             }
 
-            if (! empty($validatedData['preview_image'])) {
-                $path = $validatedData['preview_image']->store('posts');
-                $media = Media::create([
-                    'path' => $path,
-                ]);
-                $post->preview_image_id = $media->id;
-            }
+            // if ($request->hasPreviewVideo()) {
+            //     $post->previewVideo()->create($request->previewVideoPayload());
+            // }
 
-            $post->save();
+            // foreach ($request->safe()->media as $media) {
+            //     $post->media()->create($request->mediaPayload($media));
+            // }
 
-            $post_id = $post->id;
+            // foreach ($request->safe()->categories as $category) {
+            //     $post->categories()->associate($category['id'] ?? Category::create($category));
+            // }
+
+            return tap($post)->save();
         });
 
-        return to_route('post.edit', ['post' => $post_id])->with('toasts', ['kind' => 'success', 'message' => 'Post created successfully.']);
+        return to_route('post.edit', ['post' => $post])->with('toasts', ['kind' => 'success', 'message' => 'Post created successfully.']);
     }
 
     /**
@@ -87,6 +84,8 @@ class PostController extends Controller
      */
     public function edit(Post $post)
     {
+        $post->with(['source', 'previewImage']);
+        $post->preview_image_url = $post->previewImage ? Storage::temporaryUrl($post->previewImage->path, now()->addHour()) : null;
 
         return Inertia::render('Post/Edit', ['sources' => Source::all(['id', 'name']), 'post' => $post]);
     }
