@@ -1,3 +1,4 @@
+import { Error } from "@/Components/form";
 import useForm from "@/hooks/use-form";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
@@ -56,10 +57,13 @@ export default function PostCreate({
             >
                 <label>Title</label>
                 <input type="text" name="title" />
+                <Error error={errors["title"]} />
                 <label>Description</label>
                 <input type="text" name="description" />
+                <Error error={errors["description"]} />
                 <label>Slug</label>
                 <input type="text" name="slug" />
+                <Error error={errors["slug"]} />
                 <select onChange={handleChangeSource} name="source[id]">
                     {sources?.map((source) => (
                         <option key={source.id} value={source.id}>
@@ -68,15 +72,33 @@ export default function PostCreate({
                     ))}
                     <option value="">New Source</option>
                 </select>
+                <Error error={errors["source.id"]} />
                 {showNewSource ? (
                     <>
                         <label>Source Name</label>
                         <input type="text" name="source[name]" />
+                        <Error error={errors["source.name"]} />
                         <label>Source URL</label>
                         <input type="text" name="source[url]" />
+                        <Error error={errors["source.url"]} />
                     </>
                 ) : null}
-                <input type="file" name="preview_image" />
+                <input
+                    type="file"
+                    name="preview_image"
+                    accept=".png,.jpg,jpeg,.webm"
+                />
+                <Error error={errors["preview_image"]} />
+                <input type="file" name="preview_video" accept=".mp4,.webm" />
+                <Error error={errors["preview_video"]} />
+                <input
+                    type="file"
+                    name="media[]"
+                    multiple
+                    accept=".png,.jpg,.jpeg,.mp4,.webm"
+                />
+                <Error error={errors["media"]} />
+                <Error error={errors["media.*"]} />
                 <button type="submit">Save Post</button>
             </form>
         </AuthenticatedLayout>

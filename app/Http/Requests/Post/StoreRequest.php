@@ -28,14 +28,14 @@ class StoreRequest extends FormRequest
             'source.id' => ['nullable', 'exists:sources,id'],
             'source.name' => ['required_without:source.id', 'nullable', 'string', 'max:255'],
             'source.url' => ['required_without:source.id', 'nullable', 'url'],
-            'preview_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webm', 'max:2048'],
-            // 'preview_video' => ['nullable', 'file', 'mimes:mp4,webm', 'max:2048'],
-            // 'media' => ['required', 'array'],
-            // 'media.*' => ['required', 'file', 'mimes:jpg,jpeg,png,mp4,webm', 'max:2048'],
-            // 'categories' => ['required', 'array'],
-            // 'categories.*.id' => ['nullable', 'exists:categories,id'],
-            // 'categories.*.name' => ['required_without:categories.*.id', 'nullable', 'string', 'max:255'],
-            // 'categories.*.slug' => ['required_without:categories.*.id', 'nullable', 'string', 'alpha_dash:ascii', 'max:255', Rule::unique('categories', 'slug')],
+            'preview_image' => ['required', 'image', 'mimes:jpg,jpeg,png,webm', 'max:2048'],
+            'preview_video' => ['required', 'file', 'mimes:mp4,webm', 'max:2048'],
+            'media' => ['required', 'array'],
+            'media.*' => ['required', 'file', 'mimes:jpg,jpeg,png,mp4,webm', 'max:2048'],
+            'categories' => ['required', 'array'],
+            'categories.*.id' => ['nullable', 'exists:categories,id'],
+            'categories.*.name' => ['required_without:categories.*.id', 'nullable', 'string', 'max:255'],
+            'categories.*.slug' => ['required_without:categories.*.id', 'nullable', 'string', 'alpha_dash:ascii', 'max:255', Rule::unique('categories', 'slug')],
         ];
     }
 
@@ -54,21 +54,11 @@ class StoreRequest extends FormRequest
         return $this->safe()->source;
     }
 
-    public function hasPreviewImage(): bool
-    {
-        return $this->safe()->has('preview_image');
-    }
-
     public function previewImagePayload()
     {
         return once(fn () => [
             'path' => $this->safe()->preview_image->store('posts'),
         ]);
-    }
-
-    public function hasPreviewVideo(): bool
-    {
-        return $this->safe()->has('preview_video');
     }
 
     public function previewVideoPayload()

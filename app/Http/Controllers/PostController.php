@@ -34,7 +34,7 @@ class PostController extends Controller
         //
         return Inertia::render('Post/Create', [
             'sources' => Source::all(['id', 'name']),
-            // 'categories' => Category::all(['id', 'name']),
+            'categories' => Category::all(['id', 'name']),
         ]);
     }
 
@@ -49,21 +49,16 @@ class PostController extends Controller
 
             $post->source()->associate($request->sourceId() ?? Source::create($request->sourcePayload()));
 
-            if ($request->hasPreviewImage()) {
-                $post->previewImage()->create($request->previewImagePayload());
+            $post->previewImage()->create($request->previewImagePayload());
+            $post->previewVideo()->create($request->previewVideoPayload());
+
+            foreach ($request->safe()->media as $media) {
+                $post->media()->create($request->mediaPayload($media));
             }
 
-            // if ($request->hasPreviewVideo()) {
-            //     $post->previewVideo()->create($request->previewVideoPayload());
-            // }
-
-            // foreach ($request->safe()->media as $media) {
-            //     $post->media()->create($request->mediaPayload($media));
-            // }
-
-            // foreach ($request->safe()->categories as $category) {
-            //     $post->categories()->associate($category['id'] ?? Category::create($category));
-            // }
+            foreach ($request->safe()->categories as $category) {
+                $post->categories()->associate($category['id'] ?? Category::create($category));
+            }
 
             return tap($post)->save();
         });
@@ -87,7 +82,7 @@ class PostController extends Controller
         $post->with(['source', 'previewImage']);
         $post->preview_image_url = $post->previewImage ? Storage::temporaryUrl($post->previewImage->path, now()->addHour()) : null;
 
-        return Inertia::render('Post/Edit', ['sources' => Source::all(['id', 'name']), 'post' => $post]);
+        return Inertia::render('Post/Edit', ['sources' => Source::all(['id', 'name']), 'post' => $post, 'categories' => Category::all(['id', 'name'])]);
     }
 
     /**

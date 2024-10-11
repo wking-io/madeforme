@@ -16,6 +16,7 @@ type OptionsWithoutMethod = Omit<VisitOptions, "method">;
 export interface InertiaFormProps {
     formKey: React.RefObject<string>;
     errors: Errors;
+    getError(field: keyof Errors): string | undefined;
     hasErrors: boolean;
     processing: boolean;
     progress: Progress | null;
@@ -173,6 +174,9 @@ export default function useForm(): InertiaFormProps {
     return {
         formKey,
         errors,
+        getError(field: keyof Errors) {
+            return errors?.[field];
+        },
         hasErrors,
         processing,
         progress,

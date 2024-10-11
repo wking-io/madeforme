@@ -14,8 +14,8 @@ return new class extends Migration
         //
         Schema::table('posts', function (Blueprint $table) {
             $table->foreignId('source_id')->constrained(table: 'sources');
-            $table->foreignId('preview_image_id')->nullable()->constrained(table: 'media');
-            $table->foreignId('preview_video_id')->nullable()->constrained(table: 'media');
+            $table->foreignId('preview_image_id')->constrained(table: 'media');
+            $table->foreignId('preview_video_id')->constrained(table: 'media');
         });
     }
 
