@@ -3,7 +3,7 @@ import { router } from "@inertiajs/core";
 import { MediaData } from "@/types/app";
 
 type OnFinishSelectCallback = (media: MediaData[]) => void;
-type ToggleModalFunction = (force?: boolean) => void;
+type ToggleModalFunction = () => void;
 
 export interface MediaContextType {
     media: MediaData[];
@@ -42,8 +42,8 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
 
     // Fetch media with cursor-based pagination
     const fetchMedia = async (cursor?: number): Promise<void> => {
-        const response = await Inertia.get(
-            "/media",
+        const response = await router.get(
+            route("media.index"),
             { cursor },
             { preserveState: true, preserveScroll: true }
         );
@@ -59,7 +59,11 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     const toggleModal = (
         onFinishCallback: OnFinishSelectCallback
     ): ToggleModalFunction => {
-        setIsModalOpen(!isModalOpen);
+        return () =>
+            setIsModalOpen((isOpen) => {
+                onFinishSelectRef.current = isOpen ? null : onFinishCallback;
+                return !isOpen;
+            });
     };
 
     // Upload new media
