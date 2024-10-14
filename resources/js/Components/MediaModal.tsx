@@ -45,14 +45,18 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
         const response = await router.get(
             route("media.index"),
             { cursor },
-            { preserveState: true, preserveScroll: true }
-        );
-        const { data, next_cursor } = response.props;
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onSuccess: (props) => {
+                    // VALIDATE USING ZOD
+                    const { data, next_cursor } = props;
 
-        if (data && next_cursor !== undefined) {
-            setMedia((prevMedia) => [...prevMedia, ...data]); // Append new media to existing state
-            setNextCursor(next_cursor);
-        }
+                    if (data) setMedia((prevMedia) => [...prevMedia, ...data]);
+                    setNextCursor(next_cursor ?? null);
+                },
+            }
+        );
     };
 
     // Toggle the modal state
