@@ -9,5 +9,5 @@ class Source extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'url'];
+    protected $fillable = ['name', 'url', 'slug'];
 }

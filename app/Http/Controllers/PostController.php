@@ -56,11 +56,13 @@ class PostController extends Controller
                 $post->media()->create($request->mediaPayload($media));
             }
 
+            $post = tap($post)->save();
+
             foreach ($request->safe()->categories as $category) {
-                $post->categories()->associate($category['id'] ?? Category::create($category));
+                $post->categories()->attach($category['id'] ?? Category::create($category));
             }
 
-            return tap($post)->save();
+            return $post;
         });
 
         return to_route('post.edit', ['post' => $post])->with('toasts', ['kind' => 'success', 'message' => 'Post created successfully.']);

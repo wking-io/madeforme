@@ -11,6 +11,8 @@ class Category extends Model
 {
     use HasFactory;
 
+    protected $fillable = ['name', 'slug'];
+
     // Many-to-many relationship with Post
     public function posts(): BelongsToMany
     {
