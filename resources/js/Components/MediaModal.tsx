@@ -42,7 +42,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
 
     // Fetch media with cursor-based pagination
     const fetchMedia = async (cursor?: number): Promise<void> => {
-        const response = await router.get(
+        await router.get(
             route("media.index"),
             { cursor },
             {
