@@ -1,6 +1,6 @@
-import { Error } from "@/Components/form";
+import { Error } from "@/components/form";
 import useForm from "@/hooks/use-form";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import AuthenticatedLayout from "@/layouts/AuthenticatedLayout";
 import { CategoryData, SourceData } from "@/types/app";
 import { Head } from "@inertiajs/react";
 import {

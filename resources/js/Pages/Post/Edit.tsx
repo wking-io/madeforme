@@ -1,4 +1,4 @@
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import AuthenticatedLayout from "@/layouts/AuthenticatedLayout";
 import { PostDetail, SourceData } from "@/types/app";
 import { Head, Link, useForm } from "@inertiajs/react";
 import {
