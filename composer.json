@@ -13,6 +13,7 @@
         "laravel/tinker": "^2.9",
         "league/flysystem-aws-s3-v3": "^3.29",
         "pinkary-project/type-guard": "^0.1.0",
+        "spatie/invade": "^2.1",
         "spatie/laravel-data": "^4.10",
         "spatie/laravel-typescript-transformer": "^2.5",
         "tightenco/ziggy": "^2.0"

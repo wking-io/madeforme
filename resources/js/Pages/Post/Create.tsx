@@ -1,4 +1,4 @@
-import { Error } from "@/components/form";
+import { Error, Form } from "@/components/form";
 import useForm from "@/hooks/use-form";
 import AuthenticatedLayout from "@/layouts/AuthenticatedLayout";
 import { CategoryData, SourceData } from "@/types/app";
@@ -27,18 +27,6 @@ export default function PostCreate({
         hasCategories ? null : EMPTY_CATEGORY
     );
 
-    const handleSubmit: FormEventHandler<HTMLFormElement> = useCallback(
-        (e) => {
-            e.preventDefault();
-            if (e.target instanceof HTMLFormElement) {
-                submit(e.target);
-            } else {
-                console.error("Form element not found");
-            }
-        },
-        [submit]
-    );
-
     const handleChangeSource: ChangeEventHandler<HTMLSelectElement> =
         useCallback((e) => {
             if (e.target.value === "") {
@@ -57,9 +45,9 @@ export default function PostCreate({
             }
         >
             <Head title="Create Post" />
-            <form
+            <Form
                 method="post"
-                onSubmit={handleSubmit}
+                onSubmit={submit}
                 className="flex flex-col"
                 encType="multipart/form-data"
             >
@@ -155,7 +143,7 @@ export default function PostCreate({
                     )}
                 </fieldset>
                 <button type="submit">Save Post</button>
-            </form>
+            </Form>
         </AuthenticatedLayout>
     );
 }
