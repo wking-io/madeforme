@@ -15,9 +15,7 @@ class EnsureAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user = type(Auth::user())->as(User::class);
-
-        if ($user->isKing()) {
+        if ($request->user()->is_admin) {
             return $next($request);
         }
 

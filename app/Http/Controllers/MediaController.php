@@ -2,14 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Data\MediaUploadData;
 use App\Http\Requests\Media\ConfirmRequest;
 use App\Http\Requests\Media\StoreRequest;
 use App\Models\Media;
+use App\Services\SignedRequestService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class MediaController extends Controller
 {
+    public function __construct(
+        private readonly SignedRequestService $service
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -36,46 +42,54 @@ class MediaController extends Controller
      */
     public function store(StoreRequest $request)
     {
-        $service = app(SignedRequestService::class);
-        $signatures = $request->withEachUpload(function ($upload): array {
 
-            $service->handle(
-                key: $upload['name'],
-                content_type: $upload['type'],
-                content_length: $upload['size'],
+        $signedUrls = collect([]);
+
+        collect($request->uploads)->each(function ($file) use ($signedUrls) {
+
+            $signedUrlData = $this->service->handle(
+                key: data_get($file, 'name'),
+                content_type: data_get($file, 'type'),
+                content_length: data_get($file, 'size'),
             );
 
-            $media = Media::create(['path' => $upload['name']]);
+            $media = Media::create([
+                'path' => data_get($file, 'name'),
+            ]);
 
-            return [
-                'id' => $media['id'],
-                'url' => $signature->getUri(),
-                'headers' => array_merge($signature->getHeaders(), array_filter(['Content-Type' => $file->getMimeType(), 'Content-Length' => $file->getSize()])),
-                'path' => $media['path'],
-            ];
+            $signedUrls->push([
+                'id' => $media->id,
+                'path' => $media->path,
+                'signedUrlData' => $signedUrlData,
+            ]);
         });
 
-        return Inertia::render('media/create', ['signatures' => $signatures]);
+        return Inertia::render('media/create', [
+            'signatures' => MediaUploadData::collect($signedUrls),
+        ]);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Media $media)
-    {
+    public function show(
+        Media $media
+    ) {
         //
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Media $media)
-    {
+    public function edit(
+        Media $media
+    ) {
         //
     }
 
-    public function confirm(ConfirmRequest $request)
-    {
+    public function confirm(
+        ConfirmRequest $request
+    ) {
         Media::whereIn('id', $request->safe()->media)->update(['status' => 'confirmed']);
 
         return to_route('media.index');
@@ -84,13 +98,17 @@ class MediaController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Media $media) {}
+    public function update(
+        Request $request,
+        Media $media
+    ) {}
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Media $media)
-    {
+    public function destroy(
+        Media $media
+    ) {
         //
     }
 }

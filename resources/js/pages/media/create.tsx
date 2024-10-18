@@ -40,21 +40,28 @@ function filterOutExistingSignatures({
     );
 }
 
+interface UploadProps {
+    name: string
+    size: number
+    type: string
+}
+
 function processFiles(files: Array<File>) {
     return files.reduce<{
-        uploads: Array<{ name: string; size: number }>;
+        uploads: UploadProps[];
         fileMap: Record<string, File>;
     }>(
-        ({ uploads, fileMap }, file) => {
-            const name = `${crypto.randomUUID()}.${file.name.split(".").pop()}`;
-            fileMap[name] = file;
+        ({uploads, fileMap}, file) => {
+            // const name = `${crypto.randomUUID()}.${file.name.split(".").pop()}`;
+            fileMap[name] = file.name;
             uploads.push({
-                name,
+                name:file.name,
+                type: file.type,
                 size: file.size,
             });
-            return { uploads, fileMap };
+            return {uploads, fileMap};
         },
-        { uploads: [], fileMap: {} }
+        {uploads: [], fileMap: {}}
     );
 }
 

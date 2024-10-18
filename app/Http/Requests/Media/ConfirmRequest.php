@@ -8,7 +8,7 @@ class ConfirmRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isKing(); // or implement your authorization logic
+        return $this->user()->is_admin; // or implement your authorization logic
     }
 
     /**
