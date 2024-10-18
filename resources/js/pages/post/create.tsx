@@ -1,4 +1,4 @@
-import { Error, Form } from "@/components/form";
+import { ErrorMessage as Error, Form } from "@/components/form";
 import useForm from "@/hooks/use-form";
 import AuthenticatedLayout from "@/layouts/AuthenticatedLayout";
 import { CategoryData, SourceData } from "@/types/app";

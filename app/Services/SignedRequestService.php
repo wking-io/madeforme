@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Aws\S3\S3Client;
-use Illuminate\Http\Request;
 use Psr\Http\Message\UriInterface;
 
 class SignedRequestService
@@ -12,11 +11,11 @@ class SignedRequestService
 
     public function __construct()
     {
-        $default = config('storage.disk');
+        $default = config('filesystems.default');
         $this->disk = config("filesystems.disks.{$default}");
     }
 
-    public function handle(string $key, string $content_type, array $metadata, mixed $content_length = null): array
+    public function handle(string $key, string $content_type, array $metadata = [], mixed $content_length = null): array
     {
         $expiresAfter = config('storage.uploads.url_expires_after', 60);
 
@@ -29,18 +28,12 @@ class SignedRequestService
             sprintf('+%s minutes', $expiresAfter),
         );
 
-        $native = [];
         $headers = $this->headers($signedRequest, $content_type, $content_length);
-        collect($headers)
-            ->each(function ($key, $value) use (&$native) {
-                $native[$value] = is_array($key) ? $key[0] : $key;
-            });
 
         return [
             'bucket' => data_get($this->disk, 'bucket'),
             'key' => $key,
             'url' => $this->buildUrl($signedRequest->getUri()),
-            'native' => $native,
             'headers' => $headers,
         ];
     }
