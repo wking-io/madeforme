@@ -5,9 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Media\ConfirmRequest;
 use App\Http\Requests\Media\StoreRequest;
 use App\Models\Media;
-use App\Services\GenerateSignedUploadUrl\GenerateSignedUploadUrl;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
 use Inertia\Inertia;
 
 class MediaController extends Controller
@@ -38,14 +36,21 @@ class MediaController extends Controller
      */
     public function store(StoreRequest $request)
     {
+        $service = app(SignedRequestService::class);
         $signatures = $request->withEachUpload(function ($upload): array {
-            $file = UploadedFile::fake()->create($upload['name'], $upload['size']);
-            $signature = GenerateSignedUploadUrl::sign($file);
+
+            $service->handle(
+                key: $upload['name'],
+                content_type: $upload['type'],
+                content_length: $upload['size'],
+            );
+
             $media = Media::create(['path' => $upload['name']]);
 
             return [
                 'id' => $media['id'],
-                'url' => $signature,
+                'url' => $signature->getUri(),
+                'headers' => array_merge($signature->getHeaders(), array_filter(['Content-Type' => $file->getMimeType(), 'Content-Length' => $file->getSize()])),
                 'path' => $media['path'],
             ];
         });

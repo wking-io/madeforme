@@ -18,12 +18,14 @@ const signatureDataSchema = z.record(
         id: z.number(),
         path: z.string(),
         url: z.string(),
+        headers: z.any(),
     })
 );
 
 type ClientSignatureData = SignatureData & {
     file: File;
     progress: null | number;
+    headers: any;
 };
 
 function filterOutExistingSignatures({
@@ -135,26 +137,28 @@ export default function PostCreate() {
     const handleSubmit = useCallback(
         (form: HTMLFormElement) => {
             Promise.all(
-                Object.entries(signatures).map(([key, signature]) =>
-                    uploadFileToR2({
-                        url: signature.url,
-                        file: signature.file,
-                        onProgress(progress) {
-                            setSignatures((prev) => {
-                                const signature = prev[key];
-                                if (!signature) return prev;
+                Object.entries(signatures).map(([key, signature]) => {
+                    console.log(signature.headers);
+                    return axios.put(signature.url, signature.file, {
+                        headers: signature.headers,
+                        // onUploadProgress(progress) {
+                        //     setSignatures((prev) => {
+                        //         const signature = prev[key];
+                        //         if (!signature) return prev;
 
-                                return {
-                                    ...prev,
-                                    [key]: {
-                                        ...prev[key],
-                                        progress,
-                                    },
-                                };
-                            });
-                        },
-                    })
-                )
+                        //         return {
+                        //             ...prev,
+                        //             [key]: {
+                        //                 ...prev[key],
+                        //                 progress: Math.round(
+                        //                     progress.loaded / progress.total
+                        //                 ),
+                        //             },
+                        //         };
+                        //     });
+                        // },
+                    });
+                })
             )
                 .then(() => submit(form))
                 .catch(console.error);

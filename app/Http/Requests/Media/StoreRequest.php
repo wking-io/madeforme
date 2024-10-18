@@ -23,6 +23,7 @@ class StoreRequest extends FormRequest
             'uploads' => ['required', 'array'],
             'uploads.*.name' => ['required', 'string', 'max:255'],
             'uploads.*.size' => ['required', 'numeric'],
+            'uploads.*.type' => ['required', 'string', 'max:255'],
         ];
     }
 
@@ -31,7 +32,7 @@ class StoreRequest extends FormRequest
         $results = [];
 
         foreach ($this->safe()->uploads as $upload) {
-            $results[$upload['name']] = $callback(['name' => $upload['name'], 'size' => $upload['size'] / 1024]);
+            $results[$upload['name']] = $callback($upload);
         }
 
         return $results;
