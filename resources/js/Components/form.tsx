@@ -5,13 +5,14 @@ import {
     PropsWithChildren,
 } from "react";
 
-export function Error({ error }: { error: string }) {
+export function ErrorMessage({ error }: { error: string }) {
     return <p className="text-red-500">{error}</p>;
 }
 
 export function Form({
     children,
     onSubmit,
+    method,
     ...props
 }: Omit<FormHTMLAttributes<HTMLFormElement>, "onSubmit"> &
     PropsWithChildren<{ onSubmit(form: HTMLFormElement): void }>) {
@@ -25,7 +26,12 @@ export function Form({
     };
 
     return (
-        <form {...props} onSubmit={handleSubmit}>
+        <form
+            {...props}
+            onSubmit={handleSubmit}
+            method={method === "get" ? "get" : "post"}
+        >
+            {method && <input type="hidden" name="_method" value={method} />}
             {children}
         </form>
     );

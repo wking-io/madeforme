@@ -155,16 +155,15 @@ export default function useForm(): InertiaFormProps {
             const method: Method = parseMethod(form.method);
             const url = form.action ?? route().current();
 
-            console.log(
-                "INFO FOR FORM: ",
-                Object.fromEntries(data.entries()),
-                method,
-                url
-            );
-
             if (method === "delete") {
                 router.delete(url, { ..._options, data });
             } else {
+                console.log(
+                    "submitting",
+                    method,
+                    url,
+                    Object.fromEntries(data)
+                );
                 router[method](url, data, _options);
             }
         },

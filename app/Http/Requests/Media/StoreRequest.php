@@ -20,17 +20,20 @@ class StoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'size' => ['required', 'number'],
-            'type' => ['required', 'string', 'max:255'],
+            'uploads' => ['required', 'array'],
+            'uploads.*.name' => ['required', 'string', 'max:255'],
+            'uploads.*.size' => ['required', 'numeric'],
         ];
     }
 
-    public function payload(): array|ValidatedInput
+    public function withEachUpload(callable $callback): array|ValidatedInput
     {
-        $payload = $this->safe(['name', 'type']);
-        $payload['size'] = $this->safe()->size / 1024;
+        $results = [];
 
-        return $payload;
+        foreach ($this->safe()->uploads as $upload) {
+            $results[$upload['name']] = $callback(['name' => $upload['name'], 'size' => $upload['size'] / 1024]);
+        }
+
+        return $results;
     }
 }

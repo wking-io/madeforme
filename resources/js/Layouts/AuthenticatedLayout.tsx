@@ -40,6 +40,12 @@ export default function Authenticated({
                                 >
                                     Posts
                                 </NavLink>
+                                <NavLink
+                                    href={route("media.index")}
+                                    active={route().current("media.index")}
+                                >
+                                    Media
+                                </NavLink>
                             </div>
                         </div>
 

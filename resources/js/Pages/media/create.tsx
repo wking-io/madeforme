@@ -1,24 +1,220 @@
-import { Error, Form } from "@/components/form";
+import { z } from "zod";
+import { ErrorMessage, Form } from "@/components/form";
 import useForm from "@/hooks/use-form";
 import AuthenticatedLayout from "@/layouts/AuthenticatedLayout";
-import { CategoryData, SourceData } from "@/types/app";
-import { Head } from "@inertiajs/react";
+import { CategoryData, SourceData, SignatureData } from "@/types/app";
+import { Head, router } from "@inertiajs/react";
+import { sign } from "crypto";
 import {
     ChangeEventHandler,
     FormEventHandler,
     useCallback,
     useState,
 } from "react";
+import axios from "axios";
 
-export default function PostCreate({
-    sources,
-    categories,
+const signatureDataSchema = z.record(
+    z.object({
+        id: z.number(),
+        path: z.string(),
+        url: z.string(),
+    })
+);
+
+type ClientSignatureData = SignatureData & {
+    file: File;
+    progress: null | number;
+};
+
+function filterOutExistingSignatures({
+    signatures,
+    files,
 }: {
-    sources?: Array<SourceData>;
-    categories: Array<CategoryData>;
-}) {
-    const { submit, errors } = useForm();
+    signatures: Record<string, ClientSignatureData>;
+    files: FileList;
+}): Array<File> {
+    return Array.from(files).filter(
+        (file) => signatures[file.name] === undefined
+    );
+}
 
+function processFiles(files: Array<File>) {
+    return files.reduce<{
+        uploads: Array<{ name: string; size: number }>;
+        fileMap: Record<string, File>;
+    }>(
+        ({ uploads, fileMap }, file) => {
+            const name = `${crypto.randomUUID()}.${file.name.split(".").pop()}`;
+            fileMap[name] = file;
+            uploads.push({
+                name,
+                size: file.size,
+            });
+            return { uploads, fileMap };
+        },
+        { uploads: [], fileMap: {} }
+    );
+}
+
+class UploadError extends Error {
+    public statusCode: number;
+
+    constructor(message: string, statusCode: number) {
+        super(message); // Pass the message to the base Error class
+        this.statusCode = statusCode;
+
+        // Maintains proper stack trace (only available on V8 engines like in Chrome, Node.js)
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, UploadError);
+        }
+
+        this.name = "UploadError"; // Assign a custom name to your error type
+    }
+}
+
+function uploadFileToR2({
+    url,
+    file,
+    onProgress,
+}: {
+    url: string;
+    file: File;
+    onProgress?: (percent: number) => void;
+}) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        // Open the request with the PUT method (since presigned URLs typically use PUT)
+        xhr.open("PUT", url, true);
+
+        // Set the content type of the file (this should match what the presigned URL expects)
+        xhr.setRequestHeader("Content-Type", file.type);
+
+        // Set up event listener for tracking upload progress
+        xhr.upload.onprogress = function (event) {
+            if (event.lengthComputable && onProgress) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                onProgress(percentComplete);
+            }
+        };
+
+        // Set up event listener for successful upload
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                resolve(true);
+            } else {
+                reject(
+                    new UploadError(
+                        `Failed to upload file: ${xhr.statusText}`,
+                        xhr.status
+                    )
+                );
+            }
+        };
+
+        // Set up event listener for error during upload
+        xhr.onerror = function () {
+            reject(
+                new UploadError(
+                    `Failed to upload file: ${xhr.statusText}`,
+                    xhr.status
+                )
+            );
+        };
+
+        xhr.send(file);
+    });
+}
+
+export default function PostCreate() {
+    const { submit, errors } = useForm();
+    const [signatures, setSignatures] = useState<
+        Record<string, ClientSignatureData>
+    >({});
+
+    const handleSubmit = useCallback(
+        (form: HTMLFormElement) => {
+            Promise.all(
+                Object.entries(signatures).map(([key, signature]) =>
+                    uploadFileToR2({
+                        url: signature.url,
+                        file: signature.file,
+                        onProgress(progress) {
+                            setSignatures((prev) => {
+                                const signature = prev[key];
+                                if (!signature) return prev;
+
+                                return {
+                                    ...prev,
+                                    [key]: {
+                                        ...prev[key],
+                                        progress,
+                                    },
+                                };
+                            });
+                        },
+                    })
+                )
+            )
+                .then(() => submit(form))
+                .catch(console.error);
+            // submit(form);
+        },
+        [signatures]
+    );
+
+    const handleChange: ChangeEventHandler<HTMLInputElement> = useCallback(
+        (e) => {
+            const files = e.target.files;
+            if (!files) {
+                return;
+            }
+
+            const { fileMap, uploads } = processFiles(
+                filterOutExistingSignatures({ signatures, files })
+            );
+
+            router.post(
+                route("media.store"),
+                { uploads },
+                {
+                    onError(errors) {
+                        console.error(errors);
+                    },
+                    onSuccess(page) {
+                        const validation = signatureDataSchema.safeParse(
+                            page.props.signatures
+                        );
+
+                        if (!validation.success) {
+                            console.log(validation.error);
+                            return {};
+                        }
+
+                        let newSignatures: Record<string, ClientSignatureData> =
+                            {};
+
+                        for (const key in validation.data) {
+                            const file = fileMap[key];
+                            if (file) {
+                                newSignatures[key] = {
+                                    ...validation.data[key],
+                                    file,
+                                    progress: null,
+                                };
+                            }
+                        }
+
+                        setSignatures((prev) => ({
+                            ...prev,
+                            ...newSignatures,
+                        }));
+                    },
+                }
+            );
+        },
+        [signatures]
+    );
     return (
         <AuthenticatedLayout
             header={
@@ -29,20 +225,28 @@ export default function PostCreate({
         >
             <Head title="Create Media" />
             <Form
-                method="post"
-                onSubmit={submit}
+                method="patch"
+                onSubmit={handleSubmit}
                 className="flex flex-col"
                 encType="multipart/form-data"
             >
+                {Object.values(signatures).map((signature, index) => (
+                    <input
+                        key={signature.id}
+                        type="hidden"
+                        name={`media[${index}][id]`}
+                        value={signature.id}
+                    />
+                ))}
                 <label>Media</label>
                 <input
                     type="file"
-                    name="media[]"
                     multiple
                     accept=".webp,.webm"
+                    onChange={handleChange}
                 />
-                <Error error={errors["media"]} />
-                <Error error={errors["media.*"]} />
+                <ErrorMessage error={errors["media"]} />
+                <ErrorMessage error={errors["media.*"]} />
                 <button type="submit">Save Post</button>
             </Form>
         </AuthenticatedLayout>

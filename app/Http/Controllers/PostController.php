@@ -21,7 +21,7 @@ class PostController extends Controller
     {
         $posts = Post::all(['id', 'title', 'description']);
 
-        return Inertia::render('Post/Index', [
+        return Inertia::render('post/index', [
             'posts' => $posts,
         ]);
     }

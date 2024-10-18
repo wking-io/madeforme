@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -31,7 +32,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/admin/posts/create', [PostController::class, 'store'])->name('post.store');
     Route::get('/admin/posts/{post:slug}', [PostController::class, 'edit'])->name('post.edit');
     Route::patch('/admin/posts/{post:slug}', [PostController::class, 'update'])->name('post.update');
-    Route::delete('/admin/posts/{post:slug}', [PostController::class, 'delete'])->name('post.delete');
+    Route::delete('/admin/posts/{post:slug}', [PostController::class, 'destroy'])->name('post.destroy');
+
+    Route::get('/admin/media', [MediaController::class, 'index'])->name('media.index');
+    Route::get('/admin/media/create', [MediaController::class, 'create'])->name('media.create');
+    Route::post('/admin/media/create', [MediaController::class, 'store'])->name('media.store');
+    Route::patch('/admin/media/create', [MediaController::class, 'confirm'])->name('media.confirm');
+    Route::delete('/admin/media/{post:slug}', [MediaController::class, 'destroy'])->name('media.destroy');
 });
 
 require __DIR__.'/auth.php';

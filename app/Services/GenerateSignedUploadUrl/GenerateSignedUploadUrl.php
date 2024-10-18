@@ -2,20 +2,20 @@
 
 namespace App\Services\GenerateSignedUploadUrl;
 
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 
 class GenerateSignedUploadUrl
 {
-    public function forLocal()
+    public static function sign(UploadedFile $file): string
     {
-        return URL::temporarySignedRoute(
-            'upload-file', now()->addMinutes(5)
-        );
-    }
+        if (self::isLocal()) {
+            return URL::temporarySignedRoute(
+                $file->path(), now()->addMinutes(5)
+            );
+        }
 
-    public function forCloud($file, $visibility = 'private')
-    {
         $driver = Storage::getDriver();
 
         // Flysystem V2+ doesn't allow direct access to adapter, so we need to invade instead.
@@ -28,37 +28,24 @@ class GenerateSignedUploadUrl
         $bucket = invade($adapter)->bucket;
 
         $fileType = $file->getMimeType();
-        $fileHashName = TemporaryUploadedFile::generateHashNameWithOriginalNameEmbedded($file);
-        $path = FileUploadConfiguration::path($fileHashName);
 
         $command = $client->getCommand('putObject', array_filter([
             'Bucket' => $bucket,
-            'Key' => $path,
-            'ACL' => $visibility,
-            'ContentType' => $fileType ?: 'application/octet-stream',
-            'CacheControl' => null,
-            'Expires' => null,
+            'Key' => $file->getClientOriginalName(),
+            'ContentType' => $fileType,
+            'AllowedHeaders' => ['content-type'],
+            'AllowedMethods' => ['PUT'],
+            'AllowedOrigins' => ['https://madeforme.test'],
         ]));
 
-        $signedRequest = $client->createPresignedRequest(
+        return $client->createPresignedRequest(
             $command,
             '+5minutes'
-        );
-
-        return [
-            'path' => $fileHashName,
-            'url' => (string) $signedRequest->getUri(),
-            'headers' => $this->headers($signedRequest, $fileType),
-        ];
+        )->getUri();
     }
 
-    protected function headers($signedRequest, $fileType)
+    public static function isLocal(): bool
     {
-        return array_merge(
-            $signedRequest->getHeaders(),
-            [
-                'Content-Type' => $fileType ?: 'application/octet-stream',
-            ]
-        );
+        return config('filesystems.default') === 'local';
     }
 }

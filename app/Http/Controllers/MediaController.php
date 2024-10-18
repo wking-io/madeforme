@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Media\ConfirmRequest;
 use App\Http\Requests\Media\StoreRequest;
 use App\Models\Media;
-use App\Services\GenerateSignedUploadUrl\FileUploadConfiguration;
 use App\Services\GenerateSignedUploadUrl\GenerateSignedUploadUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Inertia\Inertia;
 
 class MediaController extends Controller
 {
@@ -16,7 +17,11 @@ class MediaController extends Controller
      */
     public function index()
     {
-        //
+        $media = Media::all(['id', 'path', 'status']);
+
+        return Inertia::render('media/index', [
+            'media' => $media,
+        ]);
     }
 
     /**
@@ -25,7 +30,7 @@ class MediaController extends Controller
     public function create()
     {
         //
-        return to_route('media.create');
+        return Inertia::render('media/create');
     }
 
     /**
@@ -33,12 +38,19 @@ class MediaController extends Controller
      */
     public function store(StoreRequest $request)
     {
-        $file = UploadedFile::fake()->create($request->payload());
+        $signatures = $request->withEachUpload(function ($upload): array {
+            $file = UploadedFile::fake()->create($upload['name'], $upload['size']);
+            $signature = GenerateSignedUploadUrl::sign($file);
+            $media = Media::create(['path' => $upload['name']]);
 
-        $generator = new GenerateSignedUploadUrl;
-        $signedUrl = FileUploadConfiguration::isUsingCloud() ? $generator->forCloud($file) : $generator->forLocal();
+            return [
+                'id' => $media['id'],
+                'url' => $signature,
+                'path' => $media['path'],
+            ];
+        });
 
-        return response()->json(['url' => $signedUrl]);
+        return Inertia::render('media/create', ['signatures' => $signatures]);
     }
 
     /**
@@ -57,13 +69,17 @@ class MediaController extends Controller
         //
     }
 
+    public function confirm(ConfirmRequest $request)
+    {
+        Media::whereIn('id', $request->safe()->media)->update(['status' => 'confirmed']);
+
+        return to_route('media.index');
+    }
+
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Media $media)
-    {
-        //
-    }
+    public function update(Request $request, Media $media) {}
 
     /**
      * Remove the specified resource from storage.

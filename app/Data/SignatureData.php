@@ -1,17 +1,16 @@
 <?php
 
-namespace App\Data\Base;
+namespace App\Data;
 
-use App\Enums\MediaStatus;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 #[TypeScript]
-class MediaData extends Data
+class SignatureData extends Data
 {
     public function __construct(
         public int $id,
         public string $path,
-        public MediaStatus $status,
+        public string $url,
     ) {}
 }
