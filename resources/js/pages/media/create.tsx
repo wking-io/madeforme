@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ErrorMessage, Form } from "@/components/form";
 import useForm from "@/hooks/use-form";
 import AuthenticatedLayout from "@/layouts/AuthenticatedLayout";
-import { CategoryData, SourceData, SignatureData } from "@/types/app";
+import { MediaUploadData, SignatureData, SignedUrlData } from "@/types/app";
 import { Head, router } from "@inertiajs/react";
 import { sign } from "crypto";
 import {
@@ -12,27 +12,30 @@ import {
     useState,
 } from "react";
 import axios from "axios";
+import { url } from "inspector";
 
-const signatureDataSchema = z.record(
+const signatureDataSchema = z.array(
     z.object({
         id: z.number(),
-        path: z.string(),
-        url: z.string(),
-        headers: z.any(),
+        signedUrlData: z.object({
+            bucket: z.string(),
+            key: z.string(),
+            url: z.string(),
+            headers: z.record(z.any()),
+        }),
     })
 );
 
-type ClientSignatureData = SignatureData & {
+type ClientMediaUploadData = MediaUploadData & {
     file: File;
     progress: null | number;
-    headers: any;
 };
 
 function filterOutExistingSignatures({
     signatures,
     files,
 }: {
-    signatures: Record<string, ClientSignatureData>;
+    signatures: Record<string, ClientMediaUploadData>;
     files: FileList;
 }): Array<File> {
     return Array.from(files).filter(
@@ -40,28 +43,28 @@ function filterOutExistingSignatures({
     );
 }
 
-interface UploadProps {
-    name: string
-    size: number
-    type: string
-}
+type UploadProps = {
+    name: string;
+    size: number;
+    type: string;
+};
 
 function processFiles(files: Array<File>) {
     return files.reduce<{
         uploads: UploadProps[];
         fileMap: Record<string, File>;
     }>(
-        ({uploads, fileMap}, file) => {
+        ({ uploads, fileMap }, file) => {
             // const name = `${crypto.randomUUID()}.${file.name.split(".").pop()}`;
-            fileMap[name] = file.name;
+            fileMap[file.name] = file;
             uploads.push({
-                name:file.name,
+                name: file.name,
                 type: file.type,
                 size: file.size,
             });
-            return {uploads, fileMap};
+            return { uploads, fileMap };
         },
-        {uploads: [], fileMap: {}}
+        { uploads: [], fileMap: {} }
     );
 }
 
@@ -138,34 +141,36 @@ function uploadFileToR2({
 export default function PostCreate() {
     const { submit, errors } = useForm();
     const [signatures, setSignatures] = useState<
-        Record<string, ClientSignatureData>
+        Record<string, ClientMediaUploadData>
     >({});
 
     const handleSubmit = useCallback(
         (form: HTMLFormElement) => {
+            console.log("submitting", signatures);
             Promise.all(
-                Object.entries(signatures).map(([key, signature]) => {
-                    console.log(signature.headers);
-                    return axios.put(signature.url, signature.file, {
-                        headers: signature.headers,
-                        // onUploadProgress(progress) {
-                        //     setSignatures((prev) => {
-                        //         const signature = prev[key];
-                        //         if (!signature) return prev;
+                Object.entries(signatures).map(
+                    ([key, { file, signedUrlData }]) => {
+                        return axios.put(signedUrlData.url, file, {
+                            headers: signedUrlData.headers,
+                            // onUploadProgress(progress) {
+                            //     setSignatures((prev) => {
+                            //         const signature = prev[key];
+                            //         if (!signature) return prev;
 
-                        //         return {
-                        //             ...prev,
-                        //             [key]: {
-                        //                 ...prev[key],
-                        //                 progress: Math.round(
-                        //                     progress.loaded / progress.total
-                        //                 ),
-                        //             },
-                        //         };
-                        //     });
-                        // },
-                    });
-                })
+                            //         return {
+                            //             ...prev,
+                            //             [key]: {
+                            //                 ...prev[key],
+                            //                 progress: Math.round(
+                            //                     progress.loaded / progress.total
+                            //                 ),
+                            //             },
+                            //         };
+                            //     });
+                            // },
+                        });
+                    }
+                )
             )
                 .then(() => submit(form))
                 .catch(console.error);
@@ -202,19 +207,19 @@ export default function PostCreate() {
                             return {};
                         }
 
-                        let newSignatures: Record<string, ClientSignatureData> =
-                            {};
-
-                        for (const key in validation.data) {
-                            const file = fileMap[key];
+                        let newSignatures = validation.data.reduce<
+                            Record<string, ClientMediaUploadData>
+                        >((acc, signature) => {
+                            const file = fileMap[signature.signedUrlData.key];
                             if (file) {
-                                newSignatures[key] = {
-                                    ...validation.data[key],
+                                acc[signature.signedUrlData.key] = {
+                                    ...signature,
                                     file,
                                     progress: null,
                                 };
                             }
-                        }
+                            return acc;
+                        }, {});
 
                         setSignatures((prev) => ({
                             ...prev,

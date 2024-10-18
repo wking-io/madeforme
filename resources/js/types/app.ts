@@ -27,6 +27,10 @@ export type MediaSummary = {
     status: MediaStatus;
     post?: PostData;
 };
+export type MediaUploadData = {
+    id: number;
+    signedUrlData: SignedUrlData;
+};
 export type PostData = {
     id: number;
     title: string;
@@ -58,8 +62,13 @@ export type PostSummary = {
 };
 export type SignatureData = {
     id: number;
-    path: string;
+    signedUrlData: SignedUrlData;
+};
+export type SignedUrlData = {
+    bucket: string;
+    key: string;
     url: string;
+    headers: { [key: string]: any };
 };
 export type SourceData = {
     id: number;

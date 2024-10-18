@@ -59,7 +59,6 @@ class MediaController extends Controller
 
             $signedUrls->push([
                 'id' => $media->id,
-                'path' => $media->path,
                 'signedUrlData' => $signedUrlData,
             ]);
         });
