@@ -5,7 +5,7 @@ namespace App\Http\Requests\Media;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\ValidatedInput;
 
-class StoreRequest extends FormRequest
+class SignRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -21,7 +21,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'uploads' => ['required', 'array'],
-            'uploads.*.name' => ['required', 'string', 'max:255'],
+            'uploads.*.key' => ['required', 'string', 'max:255'],
             'uploads.*.size' => ['required', 'numeric'],
             'uploads.*.type' => ['required', 'string', 'max:255'],
         ];
@@ -32,7 +32,7 @@ class StoreRequest extends FormRequest
         $results = [];
 
         foreach ($this->safe()->uploads as $upload) {
-            $results[$upload['name']] = $callback($upload);
+            $results[$upload['key']] = $callback($upload);
         }
 
         return $results;

@@ -1,3 +1,4 @@
+import { SignedUploadData } from "@/types/app";
 import axios, { isAxiosError } from "axios";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { z } from "zod";
@@ -8,11 +9,7 @@ type UnsignedData = {
     size: number;
 };
 
-type SignedUpload = {
-    id: number;
-    key: string;
-    url: string;
-    headers: Record<string, any>;
+type SignedUpload = SignedUploadData & {
     file: File;
 };
 
@@ -25,7 +22,7 @@ type ProcessingUpload = SignedUpload & {
 type SuccessfulUpload = SignedUpload & { state: "successful" };
 type FailedUpload = SignedUpload & { state: "failed" };
 
-type Upload =
+export type Upload =
     | UnsignedUpload
     | PendingUpload
     | ProcessingUpload
@@ -75,17 +72,23 @@ export function useMediaUploader(): {
 
     const save = useCallback(
         (files: Array<File>) => {
-            const unsigned = files.flatMap<UnsignedUpload>((file) =>
-                uploadMap[file.name]
-                    ? []
-                    : [{ key: file.name, file, state: "unsigned" }]
-            );
+            if (!files.length) return;
+
+            const unsigned = files.flatMap<UnsignedUpload>((file) => {
+                const [name, extension] = file.name.split(".");
+                const key = `${name}-${crypto.randomUUID()}.${extension}`;
+                return uploadMap[key] ? [] : [{ key, file, state: "unsigned" }];
+            });
+
+            if (!unsigned.length) return;
+
             setUnsignedQueue((prev) => [...prev, ...unsigned]);
         },
         [uploadMap]
     );
 
     useEffect(() => {
+        if (!unsignedQueue.length) return;
         generatePresignedUrl(unsignedQueue)
             .then((pendingUploads) => {
                 setPendingQueue((prev) => [...prev, ...pendingUploads]);
@@ -96,6 +99,20 @@ export function useMediaUploader(): {
     }, [unsignedQueue]);
 
     useEffect(() => {
+        if (!pendingQueue.length) return;
+
+        setProcessingUploads((prev) => {
+            const next = { ...prev };
+            pendingQueue.forEach((upload) => {
+                next[upload.key] = {
+                    ...upload,
+                    state: "processing",
+                    progress: 0,
+                };
+            });
+            return next;
+        });
+
         uploadToBucket(pendingQueue, {
             onProgress(key, progress) {
                 setProcessingUploads((prev) => {
@@ -105,6 +122,8 @@ export function useMediaUploader(): {
                 });
             },
         }).then(({ successfulUploads, failedUploads }) => {
+            if (!successfulUploads.length && !failedUploads.length) return;
+
             setProcessingUploads((prev) => {
                 const next = { ...prev };
                 [...successfulUploads, ...failedUploads].forEach((upload) => {
@@ -112,14 +131,21 @@ export function useMediaUploader(): {
                 });
                 return next;
             });
-            setSuccessfulUploads((prev) => [...prev, ...successfulUploads]);
-            setFailedUploads((prev) => [...prev, ...failedUploads]);
-
             setPendingQueue([]);
+
+            if (successfulUploads.length) {
+                setSuccessfulUploads((prev) => [...prev, ...successfulUploads]);
+            }
+
+            if (failedUploads.length) {
+                setFailedUploads((prev) => [...prev, ...failedUploads]);
+            }
         });
     }, [pendingQueue]);
 
     useEffect(() => {
+        if (!successfulUploads.length) return;
+
         confirmUploads(successfulUploads, {
             onError(error) {
                 setError(error);
@@ -164,7 +190,7 @@ async function generatePresignedUrl(
             [[], {}]
         );
 
-        const result = await axios.post(route("media.post"), { uploads });
+        const result = await axios.post(route("media.sign"), { uploads });
 
         const pendingUploads: Array<PendingUpload> = signedDataSchema
             .parse(result.data)
@@ -199,10 +225,13 @@ async function uploadToBucket(
             axios
                 .put(data.url, data.file, {
                     headers: data.headers,
-                    onUploadProgress: ({ loaded, total }) => {
+                    onUploadProgress: ({ loaded, total, ...event }) => {
+                        console.log(loaded, total, event);
                         const percentCompleted = total
-                            ? Math.floor(loaded / total) * 100
+                            ? Math.floor((loaded / total) * 100)
                             : 0;
+
+                        console.log(percentCompleted);
 
                         onProgress(data.key, percentCompleted);
                     },
@@ -241,7 +270,9 @@ function confirmUploads(
     { onError }: { onError(error: string): void }
 ) {
     axios
-        .patch(route("media.patch"), { uploads: uploads.map(({ id }) => id) })
+        .patch(route("media.confirm"), {
+            media: uploads.map(({ id }) => ({ id })),
+        })
         .catch((error) => {
             // TODO: Add error tracking here when I have it.
             const message =

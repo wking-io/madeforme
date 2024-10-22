@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Data\MediaUploadData;
+use App\Data\SignedUploadData;
 use App\Http\Requests\Media\ConfirmRequest;
-use App\Http\Requests\Media\StoreRequest;
+use App\Http\Requests\Media\SignRequest;
 use App\Models\Media;
 use App\Services\SignedRequestService;
 use Illuminate\Http\Request;
@@ -40,7 +40,7 @@ class MediaController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreRequest $request)
+    public function sign(SignRequest $request)
     {
 
         $signedUrls = collect([]);
@@ -48,24 +48,24 @@ class MediaController extends Controller
         collect($request->uploads)->each(function ($file) use ($signedUrls) {
 
             $signedUrlData = $this->service->handle(
-                key: data_get($file, 'name'),
+                key: data_get($file, 'key'),
                 content_type: data_get($file, 'type'),
                 content_length: data_get($file, 'size'),
             );
 
             $media = Media::create([
-                'path' => data_get($file, 'name'),
+                'path' => data_get($file, 'key'),
             ]);
 
             $signedUrls->push([
                 'id' => $media->id,
-                'signedUrlData' => $signedUrlData,
+                'key' => $signedUrlData['key'],
+                'url' => $signedUrlData['url'],
+                'headers' => $signedUrlData['headers'],
             ]);
         });
 
-        return Inertia::render('media/create', [
-            'signatures' => MediaUploadData::collect($signedUrls),
-        ]);
+        return response()->json(SignedUploadData::collect($signedUrls));
     }
 
     /**
@@ -91,7 +91,9 @@ class MediaController extends Controller
     ) {
         Media::whereIn('id', $request->safe()->media)->update(['status' => 'confirmed']);
 
-        return to_route('media.index');
+        return response()->json([
+            'success' => true,
+        ]);
     }
 
     /**

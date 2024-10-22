@@ -6,10 +6,10 @@ use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 #[TypeScript]
-class SignedUrlData extends Data
+class SignedUploadData extends Data
 {
     public function __construct(
-        public readonly string $bucket,
+        public readonly int $id,
         public readonly string $key,
         public readonly string $url,
         /**

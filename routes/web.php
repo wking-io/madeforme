@@ -35,8 +35,8 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/admin/media', [MediaController::class, 'index'])->name('media.index');
         Route::get('/admin/media/create', [MediaController::class, 'create'])->name('media.create');
-        Route::post('/admin/media/create', [MediaController::class, 'store'])->name('media.store');
-        Route::patch('/admin/media/create', [MediaController::class, 'confirm'])->name('media.confirm');
+        Route::post('/admin/media/sign', [MediaController::class, 'sign'])->name('media.sign');
+        Route::patch('/admin/media/confirm', [MediaController::class, 'confirm'])->name('media.confirm');
         Route::delete('/admin/media/{post:slug}', [MediaController::class, 'destroy'])->name('media.destroy');
     });
 });
