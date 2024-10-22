@@ -228,35 +228,35 @@ function update({
     const updatedNodes = [...nodes];
     const updatedControlPoints = [...controlPoints];
 
-    for (const i in nodes) {
-        if (Math.abs(nodes[i].next.x - nodes[i].x) < 10) {
+    for (const i in updatedNodes) {
+        if (Math.abs(updatedNodes[i].next.x - updatedNodes[i].x) < 10) {
             const shiftX =
                 ((~~(Math.random() * 5) - 2) * Math.random() * amplitude) / 2;
-            nodes[i].prev.x = nodes[i].x;
-            nodes[i].next.x = nodes[i].base.x + shiftX;
+            updatedNodes[i].prev.x = updatedNodes[i].x;
+            updatedNodes[i].next.x = updatedNodes[i].base.x + shiftX;
         }
-        if (Math.abs(nodes[i].next.y - nodes[i].y) < 10) {
+        if (Math.abs(updatedNodes[i].next.y - updatedNodes[i].y) < 10) {
             const shiftY =
                 ((~~(Math.random() * 5) - 2) * Math.random() * amplitude) / 2;
-            nodes[i].prev.y = nodes[i].y;
-            nodes[i].next.y = nodes[i].base.y + shiftY;
+            updatedNodes[i].prev.y = updatedNodes[i].y;
+            updatedNodes[i].next.y = updatedNodes[i].base.y + shiftY;
         }
-        const distanceX = nodes[i].next.x - nodes[i].prev.x;
-        const distanceY = nodes[i].next.y - nodes[i].prev.y;
-        const remainingDistanceX = nodes[i].next.x - nodes[i].x;
-        const remainingDistanceY = nodes[i].next.y - nodes[i].y;
+        const distanceX = updatedNodes[i].next.x - updatedNodes[i].prev.x;
+        const distanceY = updatedNodes[i].next.y - updatedNodes[i].prev.y;
+        const remainingDistanceX = updatedNodes[i].next.x - updatedNodes[i].x;
+        const remainingDistanceY = updatedNodes[i].next.y - updatedNodes[i].y;
         let tX = 1 - remainingDistanceX / distanceX;
         let tY = 1 - remainingDistanceY / distanceY;
 
         const shiftX = ease(tX > 0 ? tX : 0.2) * distanceX;
         const shiftY = ease(tY > 0 ? tY : 0.2) * distanceY;
 
-        nodes[i].x += shiftX;
-        nodes[i].y += shiftY;
-        controlPoints[i].c1x += shiftX;
-        controlPoints[i].c1y += shiftY;
-        controlPoints[i].c2x += shiftX;
-        controlPoints[i].c2y += shiftY;
+        updatedNodes[i].x += shiftX;
+        updatedNodes[i].y += shiftY;
+        updatedControlPoints[i].c1x += shiftX;
+        updatedControlPoints[i].c1y += shiftY;
+        updatedControlPoints[i].c2x += shiftX;
+        updatedControlPoints[i].c2y += shiftY;
     }
 
     return { nodes: updatedNodes, controlPoints: updatedControlPoints };
