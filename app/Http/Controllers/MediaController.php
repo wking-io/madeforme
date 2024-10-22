@@ -6,16 +6,12 @@ use App\Data\SignedUploadData;
 use App\Http\Requests\Media\ConfirmRequest;
 use App\Http\Requests\Media\SignRequest;
 use App\Models\Media;
-use App\Services\SignedRequestService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class MediaController extends Controller
 {
-    public function __construct(
-        private readonly SignedRequestService $service
-    ) {}
-
     /**
      * Display a listing of the resource.
      */
@@ -46,12 +42,17 @@ class MediaController extends Controller
         $signedUrls = collect([]);
 
         collect($request->uploads)->each(function ($file) use ($signedUrls) {
+            $key = data_get($file, 'key');
+            $content_type = data_get($file, 'content_type');
 
-            $signedUrlData = $this->service->handle(
-                key: data_get($file, 'key'),
-                content_type: data_get($file, 'type'),
-                content_length: data_get($file, 'size'),
+            ['url' => $url, 'headers' => $headers] = Storage::temporaryUploadUrl($key, now()->addMinutes(5), [
+                'ACL' => 'private',
+                'ContentType' => $content_type,
+                'CacheControl' => null,
+            ]
             );
+
+            $headers['Content-Type'] = $content_type;
 
             $media = Media::create([
                 'path' => data_get($file, 'key'),
@@ -59,9 +60,9 @@ class MediaController extends Controller
 
             $signedUrls->push([
                 'id' => $media->id,
-                'key' => $signedUrlData['key'],
-                'url' => $signedUrlData['url'],
-                'headers' => $signedUrlData['headers'],
+                'key' => $key,
+                'url' => $url,
+                'headers' => $headers,
             ]);
         });
 
