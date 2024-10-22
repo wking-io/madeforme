@@ -4,6 +4,7 @@ import NavLink from "@/components/NavLink";
 import ResponsiveNavLink from "@/components/ResponsiveNavLink";
 import { Link, usePage } from "@inertiajs/react";
 import { PropsWithChildren, ReactNode, useState } from "react";
+import { Blob } from "@/components/blob";
 
 export default function Authenticated({
     header,
@@ -23,6 +24,9 @@ export default function Authenticated({
                 </Link>
 
                 <div className="flex-1 flex flex-col items-center gap-3">
+                    <div className="w-40">
+                        <Blob radius={75} />
+                    </div>
                     <NavLink
                         href={route("dashboard")}
                         active={route().current("dashboard")}

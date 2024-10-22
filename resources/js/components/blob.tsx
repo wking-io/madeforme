@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { set } from "zod";
 
 function Gradient({ id, from, to }: { id: string; from: string; to: string }) {
     return (
@@ -9,12 +10,14 @@ function Gradient({ id, from, to }: { id: string; from: string; to: string }) {
     );
 }
 
-function drawBlobPath(nodes, controlPoints, path) {
-    path.setAttributeNS(
-        null,
-        "d",
-        `
-      M${nodes[nodes.length - 1].x} ${nodes[nodes.length - 1].y}
+function createPath({
+    nodes,
+    controlPoints,
+}: {
+    nodes: Array<Node>;
+    controlPoints: Array<ControlPoint>;
+}) {
+    return `M${nodes[nodes.length - 1].x} ${nodes[nodes.length - 1].y}
       ${nodes
           .map(
               (n, i) => `
@@ -31,71 +34,71 @@ function drawBlobPath(nodes, controlPoints, path) {
           )
           .join("")}
       Z
-    `
-    );
+    `;
 }
 
-function Blob({
+export function Blob({
     radius = 50,
-    totalNodes = 6,
-    amplitude = 1,
+    totalNodes = 4,
+    amplitude = 10,
 }: {
     radius: number;
     totalNodes?: number;
     amplitude?: number;
 }) {
-    const svgRef = useRef<SVGSVGElement>(null);
-    const [nodes, setNodes] = useState<Node[]>([]);
-    const [controlPoints, setControlPoints] = useState<ControlPoint[]>([]);
+    const width = useMemo(() => radius * 2.5, [radius]);
+    const offset: Point = { x: radius * 0.25, y: radius * 0.25 };
+
+    const [initialNodes] = useState<Node[]>(() =>
+        createNodes({ totalNodes, radius, offset })
+    );
+    const [initialControlPoints] = useState<ControlPoint[]>(() =>
+        createControlPoints({
+            totalNodes,
+            nodes: initialNodes,
+            radius,
+            offset,
+        })
+    );
+    const [path, setPath] = useState<string>("");
+
+    const nodesRef = useRef(initialNodes);
+    const controlPointsRef = useRef(initialControlPoints);
 
     useEffect(() => {
-        const svg = svgRef.current;
-        if (!svg) return;
-
-        // Create nodes and control points for three layers
-        const nodes = createNodes({
-            totalNodes,
-            radius,
-            offsetX: 100,
-            offsetY: 100,
-        });
-
-        const controlPoints = createControlPoints({
-            totalNodes,
-            nodes,
-            radius,
-            offsetX: 100,
-            offsetY: 100,
-        });
-
         // Continuously update the blob path for animation
         const animate = () => {
-            const update({ nodes, controlPoints, amplitude });
-            drawBlobPath(nodes, controlPoints);
+            const updated = update({
+                nodes: nodesRef.current,
+                controlPoints: controlPointsRef.current,
+                amplitude,
+            });
+            nodesRef.current = updated.nodes;
+            controlPointsRef.current = updated.controlPoints;
+            setPath(createPath(updated));
+
+            // Trigger the next animation frame without re-rendering
             requestAnimationFrame(animate);
         };
 
         animate(); // Start the animation loop
-    }, [radius, totalNodes, amplitude]);
+    }, [totalNodes, radius, amplitude]);
 
     return (
         <svg
-            ref={svgRef}
-            width="100%"
-            height="auto"
-            viewBox="0 0 100 100"
+            viewBox={`0 0 ${width} ${width}`}
+            width={width}
+            height={width}
             xmlns="http://www.w3.org/2000/svg"
-            style={{ maxWidth: "1000px", boxSizing: "border-box" }}
+            className="w-full h-auto"
         >
             <defs>
                 <Gradient id="gradient1" from="#50F6C2" to="#80FFF2" />
             </defs>
-            <path fill="url(#gradient1)" />
+            <path fill="url(#gradient1)" d={path} />
         </svg>
     );
 }
-
-export default BlobSVG;
 
 type Point = { x: number; y: number };
 type Node = Point & {
@@ -110,13 +113,11 @@ type ControlPoint = { c1x: number; c1y: number; c2x: number; c2y: number };
 function createNodes({
     totalNodes,
     radius,
-    offsetX,
-    offsetY,
+    offset,
 }: {
     totalNodes: number;
     radius: number;
-    offsetX: number;
-    offsetY: number;
+    offset: Point;
 }) {
     let num = totalNodes,
         nodes: Array<Node> = [],
@@ -130,11 +131,11 @@ function createNodes({
         y = radius * Math.sin(angle) + width / 2;
         nodes.push({
             id: i,
-            x: x + offsetX,
-            y: y + offsetY,
-            prev: { x: x + offsetX, y: y + offsetY },
-            next: { x: x + offsetX, y: y + offsetY },
-            base: { x: x + offsetX, y: y + offsetY },
+            x: x + offset.x,
+            y: y + offset.y,
+            prev: { x: x + offset.x, y: y + offset.y },
+            next: { x: x + offset.x, y: y + offset.y },
+            base: { x: x + offset.x, y: y + offset.y },
             angle,
         });
     }
@@ -165,14 +166,12 @@ function createControlPoints({
     totalNodes,
     nodes,
     radius,
-    offsetX,
-    offsetY,
+    offset,
 }: {
     totalNodes: number;
     nodes: Array<Node>;
     radius: number;
-    offsetX: number;
-    offsetY: number;
+    offset: Point;
 }): Array<ControlPoint> {
     const idealControlPointDistance =
         (4 / 3) * Math.tan(Math.PI / (2 * totalNodes)) * radius;
@@ -190,15 +189,15 @@ function createControlPoints({
         } else {
             const angle = -n.angle;
             const rotatedC1 = rotate({
-                cx: radius + offsetX,
-                cy: radius + offsetY,
+                cx: radius + offset.x,
+                cy: radius + offset.y,
                 x: cp0.c1x,
                 y: cp0.c1y,
                 radians: angle,
             });
             const rotatedC2 = rotate({
-                cx: radius + offsetX,
-                cy: radius + offsetY,
+                cx: radius + offset.x,
+                cy: radius + offset.y,
                 x: cp0.c2x,
                 y: cp0.c2y,
                 radians: angle,
@@ -213,7 +212,7 @@ function createControlPoints({
     });
 }
 
-function ease(t: number, speed = 1) {
+function ease(t: number, speed = 0.5) {
     return (-(Math.cos((Math.PI / 2) * t * 5) - 2) / 256) * speed;
 }
 
@@ -226,7 +225,10 @@ function update({
     controlPoints: Array<ControlPoint>;
     amplitude: number;
 }) {
-    nodes.forEach((n, i) => {
+    const updatedNodes = [...nodes];
+    const updatedControlPoints = [...controlPoints];
+
+    for (const i in nodes) {
         if (Math.abs(nodes[i].next.x - nodes[i].x) < 10) {
             const shiftX =
                 ((~~(Math.random() * 5) - 2) * Math.random() * amplitude) / 2;
@@ -255,5 +257,7 @@ function update({
         controlPoints[i].c1y += shiftY;
         controlPoints[i].c2x += shiftX;
         controlPoints[i].c2y += shiftY;
-    });
+    }
+
+    return { nodes: updatedNodes, controlPoints: updatedControlPoints };
 }
