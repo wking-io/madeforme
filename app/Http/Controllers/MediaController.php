@@ -39,9 +39,9 @@ class MediaController extends Controller
     public function sign(SignRequest $request)
     {
 
-        $signedUrls = collect([]);
+        $signedData = collect([]);
 
-        collect($request->uploads)->each(function ($file) use ($signedUrls) {
+        collect($request->uploads)->each(function ($file) use ($signedData) {
             $key = data_get($file, 'key');
             $content_type = data_get($file, 'content_type');
 
@@ -58,7 +58,7 @@ class MediaController extends Controller
                 'path' => data_get($file, 'key'),
             ]);
 
-            $signedUrls->push([
+            $signedData->push([
                 'id' => $media->id,
                 'key' => $key,
                 'url' => $url,
@@ -66,7 +66,7 @@ class MediaController extends Controller
             ]);
         });
 
-        return response()->json(SignedUploadData::collect($signedUrls));
+        return response()->json(SignedUploadData::collect($signedData));
     }
 
     /**
