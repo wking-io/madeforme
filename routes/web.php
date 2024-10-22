@@ -26,6 +26,8 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::middleware(['admin'])->group(function () {
+
+        // POSTS
         Route::get('/admin/posts', [PostController::class, 'index'])->name('post.index');
         Route::get('/admin/posts/create', [PostController::class, 'create'])->name('post.create');
         Route::post('/admin/posts/create', [PostController::class, 'store'])->name('post.store');
@@ -33,6 +35,7 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/admin/posts/{post:slug}', [PostController::class, 'update'])->name('post.update');
         Route::delete('/admin/posts/{post:slug}', [PostController::class, 'destroy'])->name('post.destroy');
 
+        // MEDIA
         Route::get('/admin/media', [MediaController::class, 'index'])->name('media.index');
         Route::get('/admin/media/create', [MediaController::class, 'create'])->name('media.create');
         Route::post('/admin/media/sign', [MediaController::class, 'sign'])->name('media.sign');

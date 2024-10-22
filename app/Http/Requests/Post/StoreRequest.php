@@ -29,10 +29,10 @@ class StoreRequest extends FormRequest
             'source.id' => ['nullable', 'exists:sources,id'],
             'source.name' => ['required_without:source.id', 'nullable', 'string', 'max:255'],
             'source.url' => ['required_without:source.id', 'nullable', 'url'],
-            'preview_image' => ['required', 'image', 'mimes:webp', 'max:2048'],
-            'preview_video' => ['required', 'file', 'mimes:webm', 'max:5120'],
+            'preview_image' => ['required', 'exists:media,id'],
+            'preview_video' => ['required', 'exists:media,id'],
             'media' => ['required', 'array'],
-            'media.*' => ['required', 'file', 'mimes:webp,webm', 'max:5120'],
+            'media.*' => ['required', 'exists:media,id'],
             'categories' => ['required', 'array'],
             'categories.*.id' => ['nullable', 'exists:categories,id'],
             'categories.*.name' => ['required_without:categories.*.id', 'nullable', 'string', 'max:255'],
@@ -56,26 +56,5 @@ class StoreRequest extends FormRequest
         $newSource['slug'] = Str::slug($newSource['name']);
 
         return $newSource;
-    }
-
-    public function previewImagePayload()
-    {
-        return once(fn () => [
-            'path' => $this->safe()->preview_image->store('posts'),
-        ]);
-    }
-
-    public function previewVideoPayload()
-    {
-        return once(fn () => [
-            'path' => $this->safe()->preview_video->store('posts'),
-        ]);
-    }
-
-    public function mediaPayload($media)
-    {
-        return once(fn () => [
-            'path' => $media->store('posts'),
-        ]);
     }
 }

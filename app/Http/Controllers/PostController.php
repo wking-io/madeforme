@@ -32,7 +32,7 @@ class PostController extends Controller
     public function create(): Response
     {
         //
-        return Inertia::render('Post/Create', [
+        return Inertia::render('post/create', [
             'sources' => Source::all(['id', 'name']),
             'categories' => Category::all(['id', 'name']),
         ]);

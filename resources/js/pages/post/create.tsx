@@ -45,105 +45,127 @@ export default function PostCreate({
             }
         >
             <Head title="Create Post" />
-            <Form
-                method="post"
-                onSubmit={submit}
-                className="flex flex-col"
-                encType="multipart/form-data"
-            >
-                <label>Title</label>
-                <input type="text" name="title" />
-                <Error error={errors["title"]} />
-                <label>Description</label>
-                <input type="text" name="description" />
-                <Error error={errors["description"]} />
-                <label>Slug</label>
-                <input type="text" name="slug" />
-                <Error error={errors["slug"]} />
-                <select onChange={handleChangeSource} name="source[id]">
-                    {sources?.map((source) => (
-                        <option key={source.id} value={source.id}>
-                            {source.name}
-                        </option>
-                    ))}
-                    <option value="">New Source</option>
-                </select>
-                <Error error={errors["source.id"]} />
-                {showNewSource ? (
-                    <>
-                        <label>Source Name</label>
-                        <input type="text" name="source[name]" />
-                        <Error error={errors["source.name"]} />
-                        <label>Source URL</label>
-                        <input type="text" name="source[url]" />
-                        <Error error={errors["source.url"]} />
-                    </>
-                ) : null}
-                <label>Preview Image</label>
-                <input type="file" name="preview_image" accept=".webp" />
-                <Error error={errors["preview_image"]} />
-                <label>Preview Video</label>
-                <input type="file" name="preview_video" accept=".webm" />
-                <Error error={errors["preview_video"]} />
-                <label>Media</label>
-                <input
-                    type="file"
-                    name="media[]"
-                    multiple
-                    accept=".webp,.webm"
-                />
-                <Error error={errors["media"]} />
-                <Error error={errors["media.*"]} />
-                <fieldset>
-                    <legend>Categories</legend>
-                    {categories?.map((category, index) => (
-                        <CategoryInput
-                            value={category.id}
-                            label={category.name}
-                            index={index}
+            <div className="m-8 p-2 bg-foreground/5 rounded-md backdrop-blur-lg">
+                <div className="highlight absolute -inset-px rounded-md" />
+                <h2 className="text-foreground">Create Post</h2>
+                <div className="rounded bg-background">
+                    <Form
+                        method="post"
+                        onSubmit={submit}
+                        className="flex flex-col"
+                        encType="multipart/form-data"
+                    >
+                        <label>Title</label>
+                        <input type="text" name="title" />
+                        <Error error={errors["title"]} />
+                        <label>Description</label>
+                        <input type="text" name="description" />
+                        <Error error={errors["description"]} />
+                        <label>Slug</label>
+                        <input type="text" name="slug" />
+                        <Error error={errors["slug"]} />
+                        <select onChange={handleChangeSource} name="source[id]">
+                            {sources?.map((source) => (
+                                <option key={source.id} value={source.id}>
+                                    {source.name}
+                                </option>
+                            ))}
+                            <option value="">New Source</option>
+                        </select>
+                        <Error error={errors["source.id"]} />
+                        {showNewSource ? (
+                            <>
+                                <label>Source Name</label>
+                                <input type="text" name="source[name]" />
+                                <Error error={errors["source.name"]} />
+                                <label>Source URL</label>
+                                <input type="text" name="source[url]" />
+                                <Error error={errors["source.url"]} />
+                            </>
+                        ) : null}
+                        <label>Preview Image</label>
+                        <input
+                            type="file"
+                            name="preview_image"
+                            accept=".webp"
                         />
-                    ))}
-                    {newCategories?.map((category, index) => (
-                        <CategoryInput
-                            label={category.name}
-                            index={categories.length + index}
+                        <Error error={errors["preview_image"]} />
+                        <label>Preview Video</label>
+                        <input
+                            type="file"
+                            name="preview_video"
+                            accept=".webm"
                         />
-                    ))}
-                    {newCategory !== null || !hasCategories ? (
-                        <div>
-                            <label htmlFor="new-category">New Category</label>
-                            <input
-                                type="text"
-                                id="new-category"
-                                value={newCategory ?? ""}
-                                onChange={(e) => setNewCategory(e.target.value)}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    if (newCategory?.length) {
-                                        setNewCategories((categories) => [
-                                            ...categories,
-                                            { name: newCategory },
-                                        ]);
-                                        setNewCategory(null);
+                        <Error error={errors["preview_video"]} />
+                        <label>Media</label>
+                        <input
+                            type="file"
+                            name="media[]"
+                            multiple
+                            accept=".webp,.webm"
+                        />
+                        <Error error={errors["media"]} />
+                        <Error error={errors["media.*"]} />
+                        <fieldset>
+                            <legend>Categories</legend>
+                            {categories?.map((category, index) => (
+                                <CategoryInput
+                                    value={category.id}
+                                    label={category.name}
+                                    index={index}
+                                />
+                            ))}
+                            {newCategories?.map((category, index) => (
+                                <CategoryInput
+                                    label={category.name}
+                                    index={categories.length + index}
+                                />
+                            ))}
+                            {newCategory !== null || !hasCategories ? (
+                                <div>
+                                    <label htmlFor="new-category">
+                                        New Category
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="new-category"
+                                        value={newCategory ?? ""}
+                                        onChange={(e) =>
+                                            setNewCategory(e.target.value)
+                                        }
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (newCategory?.length) {
+                                                setNewCategories(
+                                                    (categories) => [
+                                                        ...categories,
+                                                        { name: newCategory },
+                                                    ]
+                                                );
+                                                setNewCategory(null);
+                                            }
+                                        }}
+                                    >
+                                        Add New
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setNewCategory(EMPTY_CATEGORY)
                                     }
-                                }}
-                            >
-                                Add New
-                            </button>
-                        </div>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={() => setNewCategory(EMPTY_CATEGORY)}
-                        >
-                            Add New
-                        </button>
-                    )}
-                </fieldset>
-                <button type="submit">Save Post</button>
-            </Form>
+                                >
+                                    Add New
+                                </button>
+                            )}
+                        </fieldset>
+                        <button type="submit">Save Post</button>
+                    </Form>
+                </div>
+            </div>
         </AuthenticatedLayout>
     );
 }
