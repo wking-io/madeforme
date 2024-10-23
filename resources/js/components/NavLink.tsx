@@ -11,10 +11,8 @@ export default function NavLink({
         <Link
             {...props}
             className={cn(
-                "isolate relative p-4",
-                active
-                    ? "bg-foreground text-background"
-                    : "bg-background text-foreground",
+                "isolate relative px-4 py-5 transition-colors",
+                active ? "text-background" : "text-foreground",
                 className
             )}
         >

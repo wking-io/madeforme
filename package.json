@@ -25,7 +25,9 @@
         "vite": "^5.0"
     },
     "dependencies": {
+        "@georgedoescode/spline": "^1.0.1",
         "@inertiajs/core": "^1.2.0",
+        "simplex-noise": "^4.0.3",
         "zod": "^3.23.8"
     }
 }
