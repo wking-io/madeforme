@@ -1,7 +1,28 @@
 @import "tailwindcss";
 
+@font-face {
+    font-family: "Fam";
+    src: url("./fonts/FamiljenGrotesk-Variable.woff2") format("woff2"),
+        url("./fonts/FamiljenGrotesk-Variable.woff") format("woff"),
+        url("./fonts/FamiljenGrotesk-Variable.ttf") format("truetype");
+    font-weight: 300 700;
+    font-display: swap;
+    font-style: normal;
+}
+@font-face {
+    font-family: "Fam";
+    src: url("./fonts/FamiljenGrotesk-VariableItalic.woff2") format("woff2"),
+        url("./fonts/FamiljenGrotesk-VariableItalic.woff") format("woff"),
+        url("./fonts/FamiljenGrotesk-VariableItalic.ttf") format("truetype");
+    font-weight: 300 700;
+    font-display: swap;
+    font-style: italic;
+}
+
 @theme {
     --breakpoint-constrained: 1168px;
+    --font-family-default: "Fam", var(--font-family-sans);
+    --default-font-family: var(--font-family-default);
 
     --color-red: #f23655;
     --color-red-foreground: #fde7eb;
@@ -119,49 +140,4 @@ progress::-webkit-progress-bar {
 
 progress::-webkit-progress-value {
     @apply bg-blue-500 rounded-full;
-}
-
-.admin {
-    background-color: var(--color-pink-50);
-    background-image: radial-gradient(
-            at 62% 11%,
-            var(--color-pink-50) 0px,
-            transparent 50%
-        ),
-        radial-gradient(
-            at 80% 0%,
-            color-mix(in srgb, var(--color-pink) 30%, transparent) 0px,
-            transparent 50%
-        ),
-        radial-gradient(at 60% 89%, var(--color-pink-50) 0px, transparent 50%),
-        radial-gradient(
-            at 78% 45%,
-            color-mix(in srgb, var(--color-pink) 30%, transparent) 0px,
-            transparent 50%
-        ),
-        radial-gradient(
-            at 61% 88%,
-            color-mix(in srgb, var(--color-pink) 100%, transparent) 0px,
-            transparent 50%
-        ),
-        radial-gradient(at 39% 69%, var(--color-pink-50) 0px, transparent 50%),
-        radial-gradient(
-            at 22% 79%,
-            color-mix(in srgb, var(--color-pink) 30%, transparent) 0px,
-            transparent 50%
-        );
-}
-
-.highlight {
-    background: linear-gradient(
-        to bottom right,
-        var(--color-white),
-        color-mix(in srgb, var(--color-pink-600) 40%, transparent)
-    ); /* Gradient for the border */
-    -webkit-mask: linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0); /* Masks the content area to make it transparent */
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    padding: 1px; /* Border size */
 }

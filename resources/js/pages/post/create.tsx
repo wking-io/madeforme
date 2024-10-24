@@ -1,11 +1,22 @@
+import { Checkbox, CheckboxField } from "@/components/checkbox";
 import { ErrorMessage as Error, Form } from "@/components/form";
+import { Listbox, ListboxLabel, ListboxOption } from "@/components/listbox";
 import useForm from "@/hooks/use-form";
 import AuthenticatedLayout from "@/layouts/AuthenticatedLayout";
 import { CategoryData, SourceData } from "@/types/app";
+import {
+    Field,
+    Fieldset,
+    Input,
+    InputProps,
+    Label,
+    Legend,
+} from "@headlessui/react";
 import { Head } from "@inertiajs/react";
 import {
     ChangeEventHandler,
     FormEventHandler,
+    PropsWithChildren,
     useCallback,
     useState,
 } from "react";
@@ -17,6 +28,7 @@ export default function PostCreate({
     sources?: Array<SourceData>;
     categories: Array<CategoryData>;
 }) {
+    const [slug, setSlug] = useState("");
     const [showNewSource, setShowNewSource] = useState(!sources?.length);
     const { submit, errors } = useForm();
     const [newCategories, setNewCategories] = useState<Array<{ name: string }>>(
@@ -27,14 +39,13 @@ export default function PostCreate({
         hasCategories ? null : EMPTY_CATEGORY
     );
 
-    const handleChangeSource: ChangeEventHandler<HTMLSelectElement> =
-        useCallback((e) => {
-            if (e.target.value === "") {
-                setShowNewSource(true);
-            } else {
-                setShowNewSource(false);
-            }
-        }, []);
+    const handleChangeSource: (value: string) => void = useCallback((value) => {
+        if (value === "") {
+            setShowNewSource(true);
+        } else {
+            setShowNewSource(false);
+        }
+    }, []);
 
     return (
         <AuthenticatedLayout
@@ -45,69 +56,111 @@ export default function PostCreate({
             }
         >
             <Head title="Create Post" />
-            <div className="m-8 p-2 bg-foreground/5 rounded-md backdrop-blur-lg">
-                <div className="highlight absolute -inset-px rounded-md" />
-                <h2 className="text-foreground">Create Post</h2>
-                <div className="rounded bg-background">
-                    <Form
-                        method="post"
-                        onSubmit={submit}
-                        className="flex flex-col"
-                        encType="multipart/form-data"
+
+            <Form
+                method="post"
+                onSubmit={submit}
+                className="p-6 mt-2 flex flex-col"
+                encType="multipart/form-data"
+            >
+                <div className="flex justify-between items-center">
+                    <div className="py-2">
+                        <h2 className="font-medium text-lg">Create Post</h2>
+                        <p className="text-sm text-foreground-muted">
+                            All posts are created as drafts and need to be
+                            published before they are visible to the public.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        className="group/button button isolate relative text-white pt-[3px] pb-[5px] px-5 cursor-pointer"
                     >
-                        <label>Title</label>
-                        <input type="text" name="title" />
-                        <Error error={errors["title"]} />
-                        <label>Description</label>
-                        <input type="text" name="description" />
-                        <Error error={errors["description"]} />
-                        <label>Slug</label>
-                        <input type="text" name="slug" />
-                        <Error error={errors["slug"]} />
-                        <select onChange={handleChangeSource} name="source[id]">
-                            {sources?.map((source) => (
-                                <option key={source.id} value={source.id}>
-                                    {source.name}
-                                </option>
-                            ))}
-                            <option value="">New Source</option>
-                        </select>
-                        <Error error={errors["source.id"]} />
+                        <span className="absolute z-[-1] bg-gradient-to-b group-active/button:from-pink-700/30 from-pink-600/30 via-pink to-pink-400 rounded-sm inset-0.5"></span>
+                        <span className="absolute z-[-2] bg-pink rounded-sm inset-0.5"></span>
+                        <span className="absolute z-[-3] rounded-[4px] bg-gradient-to-b group-active/button:from-pink-500 group-active/button:via-pink-600 group-active/button:to-pink-700/50 from-pink-300 via-pink to-pink-600 inset-0" />
+                        <span className="absolute z-[-4] top-4 left-4 -right-3 -bottom-2 bg-foreground/20 group-active/button:-right-1 group-active/button:-bottom-1 group-active/button:blur-sm blur" />
+                        <span className="absolute -inset-[5px] rounded-[9px] z-[-5] bg-gradient-to-br from-pink/20 to-pink/30" />
+                        <span className="absolute z-[-6] -left-[5px] -top-[5px] -bottom-[6px] -right-[6px] bg-white rounded-[8px]"></span>
+                        Save Post
+                    </button>
+                </div>
+                <div className="flex gap-12">
+                    <div className="flex flex-col gap-3 flex-1">
+                        <input type="hidden" name="slug" value={slug} />
+                        <Field className="grid gap-1">
+                            <Label>Title</Label>
+                            <div className="rounded-sm border border-pink-900/30 bg-white flex flex-col focus-within:ring-2 focus-within:ring-pink-600/20 focus-within:border-pink-900/50">
+                                <Input
+                                    type="text"
+                                    name="title"
+                                    className="border-none py-1 px-2 focus:outline-none"
+                                    onChange={(e) =>
+                                        setSlug(slugify(e.target.value))
+                                    }
+                                />
+                                <p className="bg-pink-600/10 text-pink-700 font-mono text-xs py-1 px-2">
+                                    {slug.length
+                                        ? slug
+                                        : "Start typing to see slug"}
+                                </p>
+                            </div>
+                            <Error>
+                                {mergeErrors(errors, ["title", "slug"]) ??
+                                    "This is an error"}
+                            </Error>
+                        </Field>
+                        <Field>
+                            <Label>Description</Label>
+                            <input type="text" name="description" />
+                            <Error>{errors["description"]}</Error>
+                        </Field>
+                        <Field>
+                            <Listbox
+                                onChange={handleChangeSource}
+                                name="source[id]"
+                                defaultValue={sources?.[0]?.id.toString() ?? ""}
+                            >
+                                {sources?.map((source) => (
+                                    <ListboxOption
+                                        key={source.id}
+                                        value={source.id.toString()}
+                                    >
+                                        <ListboxLabel>
+                                            {source.name}
+                                        </ListboxLabel>
+                                    </ListboxOption>
+                                ))}
+                                <ListboxOption value="">
+                                    New Source
+                                </ListboxOption>
+                            </Listbox>
+                            <Error>{errors["source.id"]}</Error>
+                        </Field>
                         {showNewSource ? (
-                            <>
-                                <label>Source Name</label>
-                                <input type="text" name="source[name]" />
-                                <Error error={errors["source.name"]} />
-                                <label>Source URL</label>
-                                <input type="text" name="source[url]" />
-                                <Error error={errors["source.url"]} />
-                            </>
+                            <Fieldset className="grid gap-1">
+                                <Legend>New Source</Legend>
+                                <div className="flex gap-3">
+                                    <SourceField>
+                                        <SourceLabel>Source Name</SourceLabel>
+                                        <SourceInput
+                                            type="text"
+                                            name="source[name]"
+                                        />
+                                        <Error>{errors["source.name"]}</Error>
+                                    </SourceField>
+                                    <SourceField>
+                                        <SourceLabel>Source URL</SourceLabel>
+                                        <SourceInput
+                                            type="text"
+                                            name="source[url]"
+                                        />
+                                        <Error> {errors["source.url"]}</Error>
+                                    </SourceField>
+                                </div>
+                            </Fieldset>
                         ) : null}
-                        <label>Preview Image</label>
-                        <input
-                            type="file"
-                            name="preview_image"
-                            accept=".webp"
-                        />
-                        <Error error={errors["preview_image"]} />
-                        <label>Preview Video</label>
-                        <input
-                            type="file"
-                            name="preview_video"
-                            accept=".webm"
-                        />
-                        <Error error={errors["preview_video"]} />
-                        <label>Media</label>
-                        <input
-                            type="file"
-                            name="media[]"
-                            multiple
-                            accept=".webp,.webm"
-                        />
-                        <Error error={errors["media"]} />
-                        <Error error={errors["media.*"]} />
-                        <fieldset>
-                            <legend>Categories</legend>
+                        <Fieldset>
+                            <Legend>Categories</Legend>
                             {categories?.map((category, index) => (
                                 <CategoryInput
                                     value={category.id}
@@ -119,13 +172,14 @@ export default function PostCreate({
                                 <CategoryInput
                                     label={category.name}
                                     index={categories.length + index}
+                                    defaultChecked
                                 />
                             ))}
                             {newCategory !== null || !hasCategories ? (
-                                <div>
-                                    <label htmlFor="new-category">
+                                <Field>
+                                    <Label htmlFor="new-category">
                                         New Category
-                                    </label>
+                                    </Label>
                                     <input
                                         type="text"
                                         id="new-category"
@@ -150,7 +204,7 @@ export default function PostCreate({
                                     >
                                         Add New
                                     </button>
-                                </div>
+                                </Field>
                             ) : (
                                 <button
                                     type="button"
@@ -161,12 +215,67 @@ export default function PostCreate({
                                     Add New
                                 </button>
                             )}
-                        </fieldset>
-                        <button type="submit">Save Post</button>
-                    </Form>
+                        </Fieldset>
+                    </div>
+                    <div className="flex-1 max-w-72">
+                        <Field>
+                            <Label>Preview Image</Label>
+                            <input
+                                type="file"
+                                name="preview_image"
+                                accept=".webp"
+                            />
+                            <Error>{errors["preview_image"]}</Error>
+                        </Field>
+                        <Field>
+                            <Label>Preview Video</Label>
+                            <input
+                                type="file"
+                                name="preview_video"
+                                accept=".webm"
+                            />
+                            <Error>{errors["preview_video"]}</Error>
+                        </Field>
+                        <Field>
+                            <Label>Media</Label>
+                            <input
+                                type="file"
+                                name="media[]"
+                                multiple
+                                accept=".webp,.webm"
+                            />
+                            <Error>{errors["media"]}</Error>
+                            <Error>{errors["media.*"]}</Error>
+                        </Field>
+                    </div>
                 </div>
-            </div>
+            </Form>
         </AuthenticatedLayout>
+    );
+}
+
+function SourceField({ children }: PropsWithChildren) {
+    return (
+        <Field className="rounded-sm border border-pink-900/30 bg-white flex focus-within:ring-2 focus-within:ring-pink-600/20 focus-within:border-pink-900/50 flex-1">
+            {children}
+        </Field>
+    );
+}
+
+function SourceLabel({ children }: PropsWithChildren) {
+    return (
+        <Label className="px-2 py-1 bg-pink-600/10 text-pink-700">
+            {children}
+        </Label>
+    );
+}
+
+function SourceInput({ className, ...props }: PropsWithChildren<InputProps>) {
+    return (
+        <Input
+            {...props}
+            className="border-none py-1 px-2 focus:outline-none"
+        />
     );
 }
 
@@ -174,19 +283,19 @@ function CategoryInput({
     value,
     label,
     index,
+    defaultChecked = false,
 }: {
     value?: number;
     label: string;
     index: number;
+    defaultChecked?: boolean;
 }) {
-    const id = `cat-${label}`;
     return (
-        <div className="">
-            <input
-                type="checkbox"
+        <CheckboxField>
+            <Checkbox
                 name={`categories[${index}][${value ? "id" : "name"}]`}
-                value={value ?? label}
-                id={id}
+                value={value?.toString() ?? label}
+                defaultChecked={defaultChecked}
             />
             {value ? null : (
                 <input
@@ -195,8 +304,8 @@ function CategoryInput({
                     value={slugify(label)}
                 />
             )}
-            <label htmlFor={id}>{label}</label>
-        </div>
+            <Label>{label}</Label>
+        </CheckboxField>
     );
 }
 
@@ -208,4 +317,8 @@ function slugify(text: string): string {
         .toLowerCase() // Convert to lowercase
         .replace(/[\s\W-]+/g, "-") // Replace spaces and non-word characters with a hyphen
         .replace(/^-+|-+$/g, ""); // Remove leading and trailing hyphens
+}
+
+function mergeErrors(errors: Record<string, string>, keys: string[]): string {
+    return keys.flatMap((key) => (errors[key] ? [errors[key]] : [])).join(". ");
 }

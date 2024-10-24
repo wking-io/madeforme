@@ -53,7 +53,8 @@ const createPoints = (): PointType[] => {
 export function Blob({
     className,
     active,
-}: PropsWithClassName<{ active: boolean }>) {
+    size = 50,
+}: PropsWithClassName<{ active: boolean; size?: number }>) {
     const pathRef = useRef<SVGPathElement>(null);
     const pointsRef = useRef<PointType[]>(createPoints());
     const noiseStepRef = useRef<number>(0);
@@ -127,6 +128,8 @@ export function Blob({
 
     return (
         <svg
+            width={size}
+            height={size}
             className={cn(className, "fill-current text-foreground")}
             viewBox="0 0 200 200"
         >

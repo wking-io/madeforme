@@ -198,7 +198,7 @@ function Nav() {
     const [isHovering, setIsHovering] = useState(false);
     const [hoverIndex, setHoverIndex] = useState<null | number>(null);
 
-    const blobSize = 74;
+    const blobSize = 60;
     const itemSize = 60;
 
     useEffect(() => {
@@ -227,7 +227,7 @@ function Nav() {
                     transform: `translateY(${blobOffset}px)`,
                 }}
             >
-                <Blob active={isHovering} className="w-[74px]" />
+                <Blob active={isHovering} size={blobSize} />
             </div>
             <div className="flex-1 flex flex-col">
                 {navLinks.map(({ name, icon: Icon, href }, i) => (
