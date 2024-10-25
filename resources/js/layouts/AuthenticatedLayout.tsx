@@ -4,6 +4,7 @@ import NavLink from "@/components/NavLink";
 import ResponsiveNavLink from "@/components/ResponsiveNavLink";
 import { Link, usePage } from "@inertiajs/react";
 import React, {
+    CSSProperties,
     PropsWithChildren,
     ReactNode,
     useEffect,
@@ -13,10 +14,29 @@ import React, {
 import { Blob } from "@/components/blob";
 import { PageProps } from "@/types";
 
-export default function Authenticated({
-    header,
-    children,
-}: PropsWithChildren<{ header?: ReactNode }>) {
+const colors = ["pink", "blue", "green", "yellow", "purple", "red", "orange"];
+
+function getRandomPrimary(): CSSProperties {
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    return {
+        "--color-primary-0": `var(--color-${color}-0)`,
+        "--color-primary-50": `var(--color-${color}-50)`,
+        "--color-primary-100": `var(--color-${color}-100)`,
+        "--color-primary-200": `var(--color-${color}-200)`,
+        "--color-primary-300": `var(--color-${color}-300)`,
+        "--color-primary-400": `var(--color-${color}-400)`,
+        "--color-primary-500": `var(--color-${color}-500)`,
+        "--color-primary-600": `var(--color-${color}-600)`,
+        "--color-primary-700": `var(--color-${color}-700)`,
+        "--color-primary-800": `var(--color-${color}-800)`,
+        "--color-primary-900": `var(--color-${color}-900)`,
+        "--color-primary": `var(--color-${color})`,
+        "--color-foreground": `var(--color-${color}-900)`,
+        "--color-background": `var(--color-${color}-0)`,
+    } as CSSProperties;
+}
+
+export default function Authenticated({ children }: PropsWithChildren) {
     const { auth, toasts } = usePage<PageProps>().props;
     const { user } = auth;
 
@@ -24,7 +44,10 @@ export default function Authenticated({
         useState(false);
 
     return (
-        <div className="min-h-screen bg-background flex">
+        <div
+            className="bg-background text-foreground min-h-screen flex"
+            style={getRandomPrimary()}
+        >
             <nav className="p-4 sm:p-6 flex flex-col gap-8 justify-between">
                 <Link href="/" className="">
                     <Logo className="block w-12 h-auto ml-1.5" />
@@ -38,7 +61,7 @@ export default function Authenticated({
                             <Dropdown.Trigger>
                                 <button
                                     type="button"
-                                    className="bg-pink-600 rounded-full w-12 h-12"
+                                    className="bg-primary-600 rounded-full w-12 h-12"
                                 >
                                     <span className="sr-only">{user.name}</span>
                                 </button>
@@ -198,7 +221,7 @@ function Nav() {
     const [isHovering, setIsHovering] = useState(false);
     const [hoverIndex, setHoverIndex] = useState<null | number>(null);
 
-    const blobSize = 60;
+    const blobSize = 64;
     const itemSize = 60;
 
     useEffect(() => {

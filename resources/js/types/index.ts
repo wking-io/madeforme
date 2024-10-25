@@ -20,4 +20,4 @@ export type PageProps<
 
 export type Point = { x: number; y: number };
 
-export type PropsWithClassName<T> = T & { className?: string };
+export type PropsWithClassName<T = {}> = T & { className?: string };

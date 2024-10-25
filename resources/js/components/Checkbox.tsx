@@ -52,7 +52,7 @@ const base = [
     // Background color + shadow applied to inset pseudo element, so shadow blends with border in light mode
     "before:absolute before:inset-0 before:-z-10 before:rounded-sm before:bg-white before:shadow",
     // Background color when checked
-    "group-data-[checked]:before:bg-pink",
+    "group-data-[checked]:before:bg-primary",
     // Background color is moved to control and shadow is removed in dark mode so hide `before` pseudo
     // Background color applied to control in dark mode
     // Border
@@ -60,13 +60,13 @@ const base = [
     // Inner highlight shadow
     "after:absolute after:inset-0 after:rounded-sm after:shadow-[inset_0_1px_theme(colors.white/15%)]",
     // Focus ring
-    "group-data-[focus]:outline group-data-[focus]:outline-2 group-data-[focus]:outline-offset-2 group-data-[focus]:outline-pink-600/20",
+    "group-data-[focus]:outline group-data-[focus]:outline-2 group-data-[focus]:outline-offset-2 group-data-[focus]:outline-primary-600/20",
     // Disabled state
     "group-data-[disabled]:opacity-50",
     "group-data-[disabled]:border-zinc-950/25 group-data-[disabled]:bg-foreground/5 group-data-[disabled]:[--checkbox-check:color-mix(in_srgb,var(--color-foreground)_50%,transparent)] group-data-[disabled]:before:bg-transparent",
     // Forced colors mode
     "forced-colors:[--checkbox-check:HighlightText] forced-colors:[--checkbox-checked-bg:Highlight] forced-colors:group-data-[disabled]:[--checkbox-check:Highlight]",
-    "[--checkbox-check:var(--color-white)] [--checkbox-checked-border:color-mix(in_srgb,var(--color-pink-600_90%,transparent)]",
+    "[--checkbox-check:var(--color-white)] [--checkbox-checked-border:color-mix(in_srgb,var(--color-primary-600_90%,transparent)]",
 ];
 
 export function Checkbox({

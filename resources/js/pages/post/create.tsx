@@ -1,23 +1,41 @@
 import { Checkbox, CheckboxField } from "@/components/checkbox";
-import { ErrorMessage as Error, Form } from "@/components/form";
+import { ErrorMessage as Error, Form, Label } from "@/components/form";
+import { Input } from "@/components/input";
 import { Listbox, ListboxLabel, ListboxOption } from "@/components/listbox";
 import useForm from "@/hooks/use-form";
-import AuthenticatedLayout from "@/layouts/AuthenticatedLayout";
-import { CategoryData, SourceData } from "@/types/app";
 import {
+    SuccessfulUpload,
+    Upload,
+    useMediaUploader,
+} from "@/hooks/use-media-uploader";
+import AuthenticatedLayout from "@/layouts/AuthenticatedLayout";
+import { PropsWithClassName } from "@/types";
+import { CategoryData, SourceData } from "@/types/app";
+import { cn } from "@/utils/classnames";
+import {
+    Description,
+    Dialog,
+    DialogBackdrop,
+    DialogPanel,
+    DialogTitle,
     Field,
     Fieldset,
-    Input,
+    Input as RawInput,
     InputProps,
-    Label,
     Legend,
 } from "@headlessui/react";
 import { Head } from "@inertiajs/react";
 import {
     ChangeEventHandler,
+    CSSProperties,
     FormEventHandler,
+    HTMLInputTypeAttribute,
+    MouseEventHandler,
     PropsWithChildren,
     useCallback,
+    useEffect,
+    useMemo,
+    useRef,
     useState,
 } from "react";
 
@@ -48,13 +66,7 @@ export default function PostCreate({
     }, []);
 
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Create Post
-                </h2>
-            }
-        >
+        <AuthenticatedLayout>
             <Head title="Create Post" />
 
             <Form
@@ -75,11 +87,11 @@ export default function PostCreate({
                         type="button"
                         className="group/button button isolate relative text-white pt-[3px] pb-[5px] px-5 cursor-pointer"
                     >
-                        <span className="absolute z-[-1] bg-gradient-to-b group-active/button:from-pink-700/30 from-pink-600/30 via-pink to-pink-400 rounded-sm inset-0.5"></span>
-                        <span className="absolute z-[-2] bg-pink rounded-sm inset-0.5"></span>
-                        <span className="absolute z-[-3] rounded-[4px] bg-gradient-to-b group-active/button:from-pink-500 group-active/button:via-pink-600 group-active/button:to-pink-700/50 from-pink-300 via-pink to-pink-600 inset-0" />
-                        <span className="absolute z-[-4] top-4 left-4 -right-3 -bottom-2 bg-foreground/20 group-active/button:-right-1 group-active/button:-bottom-1 group-active/button:blur-sm blur" />
-                        <span className="absolute -inset-[5px] rounded-[9px] z-[-5] bg-gradient-to-br from-pink/20 to-pink/30" />
+                        <span className="absolute z-[-1] bg-gradient-to-b group-active/button:from-primary-600/70 from-primary-600/30 via-primary to-primary-400/50 rounded-sm inset-0.5"></span>
+                        <span className="absolute z-[-2] bg-primary rounded-sm inset-0.5"></span>
+                        <span className="absolute z-[-3] rounded-[4px] bg-gradient-to-b from-primary-300 via-primary to-primary-600 inset-0" />
+                        <span className="absolute z-[-4] top-2 left-2 -right-2 -bottom-1 bg-foreground/20 group-active/button:-right-1 group-active/button:-bottom-0.5 group-active/button:-right-1 blur-sm" />
+                        <span className="absolute -inset-[5px] rounded-[9px] z-[-5] bg-gradient-to-br from-primary/20 to-primary/30" />
                         <span className="absolute z-[-6] -left-[5px] -top-[5px] -bottom-[6px] -right-[6px] bg-white rounded-[8px]"></span>
                         Save Post
                     </button>
@@ -89,8 +101,8 @@ export default function PostCreate({
                         <input type="hidden" name="slug" value={slug} />
                         <Field className="grid gap-1">
                             <Label>Title</Label>
-                            <div className="rounded-sm border border-pink-900/30 bg-white flex flex-col focus-within:ring-2 focus-within:ring-pink-600/20 focus-within:border-pink-900/50">
-                                <Input
+                            <div className="rounded-sm border border-primary-900/30 bg-white flex flex-col focus-within:ring-2 focus-within:ring-primary-600/20 focus-within:border-primary-900/50">
+                                <RawInput
                                     type="text"
                                     name="title"
                                     className="border-none py-1 px-2 focus:outline-none"
@@ -98,7 +110,7 @@ export default function PostCreate({
                                         setSlug(slugify(e.target.value))
                                     }
                                 />
-                                <p className="bg-pink-600/10 text-pink-700 font-mono text-xs py-1 px-2">
+                                <p className="bg-primary-600/10 text-primary-700 font-mono text-xs py-1 px-2">
                                     {slug.length
                                         ? slug
                                         : "Start typing to see slug"}
@@ -159,83 +171,7 @@ export default function PostCreate({
                                 </div>
                             </Fieldset>
                         ) : null}
-                        <Fieldset>
-                            <Legend>Categories</Legend>
-                            {categories?.map((category, index) => (
-                                <CategoryInput
-                                    value={category.id}
-                                    label={category.name}
-                                    index={index}
-                                />
-                            ))}
-                            {newCategories?.map((category, index) => (
-                                <CategoryInput
-                                    label={category.name}
-                                    index={categories.length + index}
-                                    defaultChecked
-                                />
-                            ))}
-                            {newCategory !== null || !hasCategories ? (
-                                <Field>
-                                    <Label htmlFor="new-category">
-                                        New Category
-                                    </Label>
-                                    <input
-                                        type="text"
-                                        id="new-category"
-                                        value={newCategory ?? ""}
-                                        onChange={(e) =>
-                                            setNewCategory(e.target.value)
-                                        }
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (newCategory?.length) {
-                                                setNewCategories(
-                                                    (categories) => [
-                                                        ...categories,
-                                                        { name: newCategory },
-                                                    ]
-                                                );
-                                                setNewCategory(null);
-                                            }
-                                        }}
-                                    >
-                                        Add New
-                                    </button>
-                                </Field>
-                            ) : (
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setNewCategory(EMPTY_CATEGORY)
-                                    }
-                                >
-                                    Add New
-                                </button>
-                            )}
-                        </Fieldset>
-                    </div>
-                    <div className="flex-1 max-w-72">
-                        <Field>
-                            <Label>Preview Image</Label>
-                            <input
-                                type="file"
-                                name="preview_image"
-                                accept=".webp"
-                            />
-                            <Error>{errors["preview_image"]}</Error>
-                        </Field>
-                        <Field>
-                            <Label>Preview Video</Label>
-                            <input
-                                type="file"
-                                name="preview_video"
-                                accept=".webm"
-                            />
-                            <Error>{errors["preview_video"]}</Error>
-                        </Field>
+
                         <Field>
                             <Label>Media</Label>
                             <input
@@ -248,15 +184,386 @@ export default function PostCreate({
                             <Error>{errors["media.*"]}</Error>
                         </Field>
                     </div>
+                    <div className="flex-1 max-w-72 grid gap-2">
+                        <PreviewField errors={errors} />
+                        <PanelWrapper>
+                            <Fieldset className="grid gap-1">
+                                <Legend className="font-medium px-2">
+                                    Categories
+                                </Legend>
+                                <Panel className="p-2 overflow-auto max-h-[308px] grid gap-1">
+                                    {categories?.map((category, index) => (
+                                        <CategoryInput
+                                            value={category.id}
+                                            label={category.name}
+                                            index={index}
+                                        />
+                                    ))}
+                                    {newCategories?.map((category, index) => (
+                                        <CategoryInput
+                                            label={category.name}
+                                            index={categories.length + index}
+                                            defaultChecked
+                                        />
+                                    ))}
+                                </Panel>
+                                {newCategory !== null || !hasCategories ? (
+                                    <Panel className="p-2">
+                                        <Field className="grid gap-1">
+                                            <Label htmlFor="new-category">
+                                                New Category
+                                            </Label>
+                                            <Input
+                                                type="text"
+                                                id="new-category"
+                                                value={newCategory ?? ""}
+                                                onChange={(e) =>
+                                                    setNewCategory(
+                                                        e.target.value
+                                                    )
+                                                }
+                                            />
+                                            <button
+                                                type="button"
+                                                className="bg-foreground text-background hover:bg-foreground-muted pt-[3px] pb-[5px] px-4 cursor-pointer rounded text-sm mt-1"
+                                                onClick={() => {
+                                                    if (newCategory?.length) {
+                                                        setNewCategories(
+                                                            (categories) => [
+                                                                ...categories,
+                                                                {
+                                                                    name: newCategory,
+                                                                },
+                                                            ]
+                                                        );
+                                                        setNewCategory(null);
+                                                    }
+                                                }}
+                                            >
+                                                Add New
+                                            </button>
+                                        </Field>
+                                    </Panel>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setNewCategory(EMPTY_CATEGORY)
+                                        }
+                                        className="bg-foreground text-background hover:bg-foreground-muted pt-[3px] pb-[5px] px-4 cursor-pointer rounded text-sm mt-1"
+                                    >
+                                        Add New
+                                    </button>
+                                )}
+                            </Fieldset>
+                        </PanelWrapper>
+                    </div>
                 </div>
             </Form>
         </AuthenticatedLayout>
     );
 }
 
+function PreviewField({ errors }: { errors: Record<string, string> }) {
+    const [previewImage, setPreviewImage] = useState<SuccessfulUpload | null>(
+        null
+    );
+    const [previewVideo, setPreviewVideo] = useState<SuccessfulUpload | null>(
+        null
+    );
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <>
+            <Fieldset>
+                <legend className="sr-only">Preview</legend>
+                <PreviewWrapper>
+                    {previewImage && previewVideo ? (
+                        <FullPreview
+                            image={previewImage.file}
+                            video={previewVideo.file}
+                        />
+                    ) : (
+                        <button
+                            className="w-full h-full"
+                            onClick={() => setIsOpen(true)}
+                            type="button"
+                        >
+                            Upload preview
+                        </button>
+                    )}
+                </PreviewWrapper>
+                {previewImage ? (
+                    <input
+                        type="hidden"
+                        value={previewImage.id}
+                        name="preview_image"
+                    />
+                ) : null}
+                {previewVideo ? (
+                    <input
+                        type="hidden"
+                        name="preview_video"
+                        value={previewVideo.id}
+                    />
+                ) : null}
+                <Error>{errors["preview_video"]}</Error>
+                <Error>{errors["preview_image"]}</Error>
+            </Fieldset>
+            <Dialog
+                open={isOpen}
+                onClose={() => setIsOpen(false)}
+                className="relative z-50"
+            >
+                <DialogBackdrop
+                    transition
+                    className="fixed inset-0 duration-300 ease-out bg-foreground/10 backdrop-blur opacity-100 data-[closed]:opacity-0"
+                />
+                <DialogPanel
+                    transition
+                    className="fixed top-2 right-2 bottom-2 w-80 rounded-md bg-background shadow-lg p-4 duration-300 ease-out translate-x-0 data-[closed]:translate-x-full"
+                >
+                    <DialogTitle className="font-medium">
+                        Upload & Select Media
+                    </DialogTitle>
+                    <Description className="text-sm text-foreground-muted">
+                        Use the options specified below to upload media to
+                        storage for preview
+                    </Description>
+                    <div className="grid gap-3 mt-3">
+                        <PreviewWrapper>
+                            <UploadPreview
+                                onSelect={setPreviewImage}
+                                accept=".webp"
+                            >
+                                Upload Preview Image
+                            </UploadPreview>
+                        </PreviewWrapper>
+                        <PreviewWrapper>
+                            <UploadPreview
+                                onSelect={setPreviewVideo}
+                                accept=".webm"
+                            >
+                                Upload Preview Video
+                            </UploadPreview>
+                        </PreviewWrapper>
+                    </div>
+                </DialogPanel>
+            </Dialog>
+        </>
+    );
+}
+
+function PanelWrapper({ children }: PropsWithChildren) {
+    return (
+        <div className="w-full rounded-md p-1 isolate before:absolute relative before:-inset-px before:bg-gradient-to-br before:from-primary-300/60 before:via-primary-200/80 before:to-primary-300/60 before:z-[-2] after:absolute after:inset-0 after:bg-primary-50/70 before:rounded-[7px] after:rounded-md after:z-[-1]">
+            {children}
+        </div>
+    );
+}
+
+function Panel({ children, className }: PropsWithChildren<PropsWithClassName>) {
+    return (
+        <div className={cn(className, "bg-background rounded")}>{children}</div>
+    );
+}
+
+function PreviewWrapper({ children }: PropsWithChildren) {
+    return (
+        <PanelWrapper>
+            <div className="relative w-full h-full bg-primary-200 rounded aspect-[5/3] text-primary-700 cursor-pointer overflow-hidden">
+                {children}
+            </div>
+        </PanelWrapper>
+    );
+}
+
+function UploadPreview({
+    onSelect,
+    accept,
+    children,
+}: Pick<HTMLInputElement, "accept"> &
+    PropsWithChildren<{ onSelect: (upload: SuccessfulUpload) => void }>) {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const { uploads, save, error } = useMediaUploader();
+
+    const upload = useMemo(() => uploads[0], [uploads]);
+
+    useEffect(() => {
+        if (upload?.state === "successful") {
+            onSelect(upload);
+        }
+    }, [upload]);
+
+    return upload ? (
+        <div className="w-full h-full relative group/uploadPreview text-foreground">
+            {upload.file.type.startsWith("image/") ? (
+                <ImagePreview file={upload.file} />
+            ) : (
+                <VideoPreview file={upload.file} />
+            )}
+            <div
+                className={cn(
+                    "absolute inset-0 p-1 flex flex-col bg-gradient-to-b from-background/50 via-background/0 to-background/0 group-hover/uploadPreview:opacity-0 pointer-events-none"
+                )}
+            >
+                <div className="flex items-baseline justify-between">
+                    {upload.state === "processing" ? (
+                        <div className="flex items-center gap-1.5 text-[10px] font-mono pl-2">
+                            <progress
+                                style={
+                                    {
+                                        "--progress-bar-bg":
+                                            "var(--color-primary-100)",
+                                        "--progress-bar":
+                                            "var(--color-primary-600)",
+                                    } as CSSProperties
+                                }
+                                className="h-1.5 rounded-full overflow-hidden"
+                                value={upload.progress}
+                                max={100}
+                            />
+                            <p>{upload.progress}%</p>
+                        </div>
+                    ) : (
+                        <p className="font-mono text-[10px] pl-2">
+                            {upload.file.name}
+                        </p>
+                    )}
+                    <UploadStatus status={upload.state} />
+                </div>
+            </div>
+        </div>
+    ) : (
+        <>
+            <button
+                onClick={() => inputRef.current?.click()}
+                className="w-full h-full"
+            >
+                {children}
+            </button>
+            <input
+                type="file"
+                ref={inputRef}
+                accept={accept}
+                onChange={(e) => {
+                    save(Array.from(e.target.files ?? []));
+                }}
+                className="sr-only"
+            />
+        </>
+    );
+}
+
+const sharedStatusClasses = "rounded-sm py-px px-1.5 text-[10px] font-mono";
+const colorClasses: Record<Upload["state"], string> = {
+    unsigned: "bg-gray-500 text-gray-100",
+    pending: "bg-blue-500 text-blue-100",
+    processing: "bg-blue-500 text-blue-100",
+    successful: "bg-green-500 text-green-100",
+    failed: "bg-red-500 text-red-100",
+};
+function UploadStatus({ status }: { status: Upload["state"] }) {
+    return (
+        <span className={cn(sharedStatusClasses, colorClasses[status])}>
+            {status}
+        </span>
+    );
+}
+
+function FullPreview({ image, video }: { image: File; video: File }) {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const imageRef = useRef<HTMLImageElement>(null);
+
+    useEffect(() => {
+        const videoReader = new FileReader();
+        const imageReader = new FileReader();
+
+        videoReader.addEventListener("load", () => {
+            if (videoRef.current) {
+                videoRef.current.src = videoReader.result as string;
+            }
+        });
+
+        imageReader.addEventListener("load", () => {
+            if (imageRef.current) {
+                imageRef.current.src = imageReader.result as string;
+            }
+        });
+
+        videoReader.readAsDataURL(video);
+        imageReader.readAsDataURL(image);
+    }, [video, image]);
+
+    const handlePlay: MouseEventHandler = useCallback(() => {
+        if (videoRef.current) {
+            videoRef.current.play();
+        }
+    }, []);
+
+    const handlePause: MouseEventHandler = useCallback(() => {
+        {
+            if (videoRef.current) {
+                videoRef.current.pause();
+            }
+        }
+    }, []);
+
+    return (
+        <div
+            className="w-full h-full group/fullPreview relative"
+            onMouseEnter={handlePlay}
+            onMouseLeave={handlePause}
+        >
+            <img
+                ref={imageRef}
+                alt={image.name}
+                className="object-cover group-hover/fullPreview:opacity-0 transition-opacity absolute inset-0"
+            />
+            <video ref={videoRef} loop className="w-full h-full object-cover" />
+        </div>
+    );
+}
+
+function ImagePreview({ file }: { file: File }) {
+    const ref = useRef<HTMLImageElement>(null);
+
+    useEffect(() => {
+        const reader = new FileReader();
+        reader.addEventListener("load", () => {
+            if (ref.current) {
+                ref.current.src = reader.result as string;
+            }
+        });
+
+        reader.readAsDataURL(file);
+    }, [file]);
+
+    return (
+        <img ref={ref} alt={file.name} className="w-full h-full object-cover" />
+    );
+}
+
+function VideoPreview({ file }: { file: File }) {
+    const ref = useRef<HTMLVideoElement>(null);
+
+    useEffect(() => {
+        const reader = new FileReader();
+        reader.addEventListener("load", () => {
+            if (ref.current) {
+                ref.current.src = reader.result as string;
+            }
+        });
+
+        reader.readAsDataURL(file);
+    }, [file]);
+
+    return <video ref={ref} controls className="w-full h-full object-cover" />;
+}
+
 function SourceField({ children }: PropsWithChildren) {
     return (
-        <Field className="rounded-sm border border-pink-900/30 bg-white flex focus-within:ring-2 focus-within:ring-pink-600/20 focus-within:border-pink-900/50 flex-1">
+        <Field className="rounded-sm border border-primary-900/30 bg-white flex focus-within:ring-2 focus-within:ring-primary-600/20 focus-within:border-primary-900/50 flex-1">
             {children}
         </Field>
     );
@@ -264,7 +571,7 @@ function SourceField({ children }: PropsWithChildren) {
 
 function SourceLabel({ children }: PropsWithChildren) {
     return (
-        <Label className="px-2 py-1 bg-pink-600/10 text-pink-700">
+        <Label className="px-2 py-1 bg-primary-600/10 text-primary-700">
             {children}
         </Label>
     );
@@ -272,7 +579,7 @@ function SourceLabel({ children }: PropsWithChildren) {
 
 function SourceInput({ className, ...props }: PropsWithChildren<InputProps>) {
     return (
-        <Input
+        <RawInput
             {...props}
             className="border-none py-1 px-2 focus:outline-none"
         />

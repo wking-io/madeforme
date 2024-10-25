@@ -19,7 +19,7 @@ type ProcessingUpload = SignedUpload & {
     state: "processing";
     progress: number;
 };
-type SuccessfulUpload = SignedUpload & { state: "successful" };
+export type SuccessfulUpload = SignedUpload & { state: "successful" };
 type FailedUpload = SignedUpload & { state: "failed" };
 
 export type Upload =
