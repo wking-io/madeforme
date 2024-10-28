@@ -13,10 +13,11 @@ import React, {
 } from "react";
 import { Blob } from "@/components/blob";
 import { PageProps } from "@/types";
+import { useRootCSS } from "@/hooks/use-root-css";
 
 const colors = ["pink", "blue", "green", "yellow", "purple", "red", "orange"];
 
-function getRandomPrimary(): CSSProperties {
+function getRandomPrimary(): Record<string, string> {
     const color = colors[Math.floor(Math.random() * colors.length)];
     return {
         "--color-primary-0": `var(--color-${color}-0)`,
@@ -33,21 +34,20 @@ function getRandomPrimary(): CSSProperties {
         "--color-primary": `var(--color-${color})`,
         "--color-foreground": `var(--color-${color}-900)`,
         "--color-background": `var(--color-${color}-0)`,
-    } as CSSProperties;
+    };
 }
 
 export default function Authenticated({ children }: PropsWithChildren) {
     const { auth, toasts } = usePage<PageProps>().props;
     const { user } = auth;
 
+    useRootCSS(getRandomPrimary());
+
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
 
     return (
-        <div
-            className="bg-background text-foreground min-h-screen flex"
-            style={getRandomPrimary()}
-        >
+        <div className="bg-background text-foreground min-h-screen flex">
             <nav className="p-4 sm:p-6 flex flex-col gap-8 justify-between">
                 <Link href="/" className="">
                     <Logo className="block w-12 h-auto ml-1.5" />

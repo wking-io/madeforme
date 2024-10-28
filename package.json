@@ -27,6 +27,10 @@
     "dependencies": {
         "@georgedoescode/spline": "^1.0.1",
         "@inertiajs/core": "^1.2.0",
+        "@tiptap/extension-link": "^2.9.1",
+        "@tiptap/pm": "^2.9.1",
+        "@tiptap/react": "^2.9.1",
+        "@tiptap/starter-kit": "^2.9.1",
         "simplex-noise": "^4.0.3",
         "zod": "^3.23.8"
     }

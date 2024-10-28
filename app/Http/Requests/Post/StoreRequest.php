@@ -24,7 +24,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'description' => ['required', 'string'],
+            'description' => ['required', 'json'],
             'slug' => ['required', 'string', 'alpha_dash:ascii', 'max:255', Rule::unique(Post::class, 'slug')],
             'source.id' => ['nullable', 'exists:sources,id'],
             'source.name' => ['required_without:source.id', 'nullable', 'string', 'max:255'],

@@ -1,4 +1,5 @@
 import { Checkbox, CheckboxField } from "@/components/checkbox";
+import { Editor } from "@/components/editor";
 import { ErrorMessage as Error, Form, Label } from "@/components/form";
 import { Input } from "@/components/input";
 import { Listbox, ListboxLabel, ListboxOption } from "@/components/listbox";
@@ -122,8 +123,8 @@ export default function PostCreate({
                             </Error>
                         </Field>
                         <Field>
-                            <Label>Description</Label>
-                            <input type="text" name="description" />
+                            <Label className="sr-only">Description</Label>
+                            <Editor name="description" content="Hello world" />
                             <Error>{errors["description"]}</Error>
                         </Field>
                         <Field>
@@ -153,7 +154,7 @@ export default function PostCreate({
                                 <Legend>New Source</Legend>
                                 <div className="flex gap-3">
                                     <SourceField>
-                                        <SourceLabel>Source Name</SourceLabel>
+                                        <SourceLabel>Name</SourceLabel>
                                         <SourceInput
                                             type="text"
                                             name="source[name]"
@@ -161,7 +162,7 @@ export default function PostCreate({
                                         <Error>{errors["source.name"]}</Error>
                                     </SourceField>
                                     <SourceField>
-                                        <SourceLabel>Source URL</SourceLabel>
+                                        <SourceLabel>URL</SourceLabel>
                                         <SourceInput
                                             type="text"
                                             name="source[url]"
@@ -184,7 +185,7 @@ export default function PostCreate({
                             <Error>{errors["media.*"]}</Error>
                         </Field>
                     </div>
-                    <div className="flex-1 max-w-72 grid gap-2">
+                    <div className="flex-1 max-w-72 flex flex-col gap-2">
                         <PreviewField errors={errors} />
                         <PanelWrapper>
                             <Fieldset className="grid gap-1">
