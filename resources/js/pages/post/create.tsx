@@ -39,6 +39,7 @@ import {
     useRef,
     useState,
 } from "react";
+import { set } from "zod";
 
 export default function PostCreate({
     sources,
@@ -175,12 +176,7 @@ export default function PostCreate({
 
                         <Field>
                             <Label>Media</Label>
-                            <input
-                                type="file"
-                                name="media[]"
-                                multiple
-                                accept=".webp,.webm"
-                            />
+                            <MediaField />
                             <Error>{errors["media"]}</Error>
                             <Error>{errors["media.*"]}</Error>
                         </Field>
@@ -614,6 +610,273 @@ function CategoryInput({
             )}
             <Label>{label}</Label>
         </CheckboxField>
+    );
+}
+
+function MediaField() {
+    const [mediaList, setMediaList] = useState<Array<SuccessfulUpload>>([]);
+    const [isOpen, setIsOpen] = useState(false);
+    return (
+        <>
+            <PanelWrapper>
+                <Panel>
+                    <button type="button" onClick={() => setIsOpen(true)}>
+                        Add Media
+                    </button>
+                    <div className="flex flex-col gap-2 mt-4">
+                        {mediaList.map(({ file }) => {
+                            return (
+                                <div className="flex gap-2 items-center">
+                                    <div className="px-2 cursor-move">
+                                        <Drag size="w-2" />
+                                    </div>
+                                    <div className="aspect-[5/3] w-32 object-cover">
+                                        {file.type.startsWith("image/") ? (
+                                            <ImagePreview file={file} />
+                                        ) : (
+                                            <VideoPreview file={file} />
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </Panel>
+            </PanelWrapper>
+            <Dialog
+                open={isOpen}
+                onClose={() => setIsOpen(false)}
+                className="relative z-50"
+            >
+                <DialogBackdrop
+                    transition
+                    className="fixed inset-0 duration-300 ease-out bg-foreground/10 backdrop-blur opacity-100 data-[closed]:opacity-0"
+                />
+                <DialogPanel
+                    transition
+                    className="fixed top-2 right-2 bottom-2 w-80 rounded-md bg-background shadow-lg duration-300 ease-out translate-x-0 data-[closed]:translate-x-full flex flex-col overflow-hidden"
+                >
+                    <div className="p-4">
+                        <DialogTitle className="font-medium">
+                            Upload & Select Media
+                        </DialogTitle>
+                        <Description className="text-sm text-foreground-muted">
+                            Use the options specified below to upload media to
+                            storage
+                        </Description>
+                    </div>
+                    <div className="gap-3 mt-3 flex-1 flex-col flex overflow-y-auto overflow-x-hidden relative">
+                        <MultipleUploadPreview
+                            accept=".webm,.webp"
+                            onSelect={(uploads) => {
+                                setMediaList(uploads);
+                                setIsOpen(false);
+                            }}
+                        />
+                    </div>
+                </DialogPanel>
+            </Dialog>
+        </>
+    );
+}
+
+function MultipleUploadPreview({
+    onSelect,
+    accept,
+}: Pick<HTMLInputElement, "accept"> & {
+    onSelect: (uploads: SuccessfulUpload[]) => void;
+}) {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const { uploads, save, error } = useMediaUploader();
+    const [selectedUploads, setSelectedUploads] = useState<
+        Record<string, SuccessfulUpload>
+    >({});
+
+    return (
+        <>
+            <div className="flex gap-2 sticky top-0 z-10 bg-background/80 backdrop-blur px-2">
+                <button
+                    className="text-sm py-1 px-2"
+                    onClick={() => inputRef.current?.click()}
+                >
+                    Add Media
+                </button>
+                <button
+                    className="text-sm py-1 px-2"
+                    onClick={() => onSelect(Object.values(selectedUploads))}
+                >
+                    Save Selection
+                </button>
+            </div>
+            <input
+                multiple
+                type="file"
+                ref={inputRef}
+                accept={accept}
+                onChange={(e) => {
+                    save(Array.from(e.target.files ?? []));
+                }}
+                className="sr-only"
+            />
+            <div className="flex-1">
+                {uploads.map(({ key, ...upload }) => {
+                    const selected = selectedUploads[key];
+                    return (
+                        <div
+                            key={key}
+                            className={cn(
+                                selected && "ring ring-primary",
+                                "relative"
+                            )}
+                        >
+                            <div className="w-full h-full relative group/uploadPreview text-foreground">
+                                {upload.file.type.startsWith("image/") ? (
+                                    <ImagePreview file={upload.file} />
+                                ) : (
+                                    <VideoPreview file={upload.file} />
+                                )}
+                                <div
+                                    className={cn(
+                                        "absolute inset-0 p-1 flex flex-col bg-gradient-to-b from-background/50 via-background/0 to-background/0 group-hover/uploadPreview:opacity-0 pointer-events-none"
+                                    )}
+                                >
+                                    <div className="flex items-baseline justify-between">
+                                        {upload.state === "processing" ? (
+                                            <div className="flex items-center gap-1.5 text-[10px] font-mono pl-2">
+                                                <progress
+                                                    style={
+                                                        {
+                                                            "--progress-bar-bg":
+                                                                "var(--color-primary-100)",
+                                                            "--progress-bar":
+                                                                "var(--color-primary-600)",
+                                                        } as CSSProperties
+                                                    }
+                                                    className="h-1.5 rounded-full overflow-hidden"
+                                                    value={upload.progress}
+                                                    max={100}
+                                                />
+                                                <p>{upload.progress}%</p>
+                                            </div>
+                                        ) : (
+                                            <p className="font-mono text-[10px] pl-2">
+                                                {upload.file.name}
+                                            </p>
+                                        )}
+                                        <UploadStatus status={upload.state} />
+                                    </div>
+                                </div>
+                            </div>
+                            {upload.state === "successful" ? (
+                                <button
+                                    className="absolute inset-0"
+                                    onClick={() =>
+                                        setSelectedUploads((prev) => {
+                                            const next = { ...prev };
+                                            const selected = prev[key];
+                                            if (selected) {
+                                                delete next[key];
+                                            } else {
+                                                next[key] = { key, ...upload };
+                                            }
+                                            return next;
+                                        })
+                                    }
+                                >
+                                    <span className="sr-only">
+                                        {selected ? "Deselect" : "Select"}{" "}
+                                        {upload.file.name}
+                                    </span>
+                                </button>
+                            ) : null}
+                        </div>
+                    );
+                })}
+            </div>
+        </>
+    );
+}
+
+function MediaUploadPreview(upload: Upload) {
+    return (
+        <div className="w-full h-full relative group/uploadPreview text-foreground">
+            {upload.file.type.startsWith("image/") ? (
+                <ImagePreview file={upload.file} />
+            ) : (
+                <VideoPreview file={upload.file} />
+            )}
+            <div
+                className={cn(
+                    "absolute inset-0 p-1 flex flex-col bg-gradient-to-b from-background/50 via-background/0 to-background/0 group-hover/uploadPreview:opacity-0 pointer-events-none"
+                )}
+            >
+                <div className="flex items-baseline justify-between">
+                    {upload.state === "processing" ? (
+                        <div className="flex items-center gap-1.5 text-[10px] font-mono pl-2">
+                            <progress
+                                style={
+                                    {
+                                        "--progress-bar-bg":
+                                            "var(--color-primary-100)",
+                                        "--progress-bar":
+                                            "var(--color-primary-600)",
+                                    } as CSSProperties
+                                }
+                                className="h-1.5 rounded-full overflow-hidden"
+                                value={upload.progress}
+                                max={100}
+                            />
+                            <p>{upload.progress}%</p>
+                        </div>
+                    ) : (
+                        <p className="font-mono text-[10px] pl-2">
+                            {upload.file.name}
+                        </p>
+                    )}
+                    <UploadStatus status={upload.state} />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export function Drag({
+    size = "w-4 h-auto",
+    className,
+}: PropsWithClassName<{
+    size?: string;
+}>) {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 13.57 22.14"
+            className={cn("text-foreground-muted", size, className)}
+        >
+            <path
+                className="fill-current"
+                d="M0,2.5c0,1.38,1.12,2.5,2.5,2.5,1.38,0,2.5-1.12,2.5-2.5h0C5,1.12,3.88,0,2.5,0S0,1.12,0,2.5H0"
+            />
+            <path
+                className="fill-current"
+                d="M0,11.07c0,1.38,1.12,2.5,2.5,2.5,1.38,0,2.5-1.12,2.5-2.5h0c0-1.38-1.12-2.5-2.5-2.5C1.12,8.57,0,9.69,0,11.07H0"
+            />
+            <path
+                className="fill-current"
+                d="M0,19.64c0,1.38,1.12,2.5,2.5,2.5s2.5-1.12,2.5-2.5h0c0-1.38-1.12-2.5-2.5-2.5C1.12,17.14,0,18.26,0,19.64H0"
+            />
+            <path
+                className="fill-current"
+                d="M8.57,2.5c0,1.38,1.12,2.5,2.5,2.5,1.38,0,2.5-1.12,2.5-2.5h0C13.57,1.12,12.45,0,11.07,0c-1.38,0-2.5,1.12-2.5,2.5h0"
+            />
+            <path
+                className="fill-current"
+                d="M8.57,11.07c0,1.38,1.12,2.5,2.5,2.5,1.38,0,2.5-1.12,2.5-2.5h0c0-1.38-1.12-2.5-2.5-2.5-1.38,0-2.5,1.12-2.5,2.5h0"
+            />
+            <path
+                className="fill-current"
+                d="M8.57,19.64c0,1.38,1.12,2.5,2.5,2.5,1.38,0,2.5-1.12,2.5-2.5h0c0-1.38-1.12-2.5-2.5-2.5-1.38,0-2.5,1.12-2.5,2.5h0"
+            />
+        </svg>
     );
 }
 

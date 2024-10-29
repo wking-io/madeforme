@@ -16,6 +16,7 @@ return new class extends Migration
             $table->id();
             $table->string('path');
             $table->string('status')->default('pending');
+            $table->number('order')->nullable();
 
             $table->foreignId('post_id')->nullable()->constrained(table: 'posts');
             $table->timestamps();
