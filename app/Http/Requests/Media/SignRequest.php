@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Media;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\ValidatedInput;
 
 class SignRequest extends FormRequest
 {
@@ -21,20 +20,9 @@ class SignRequest extends FormRequest
     {
         return [
             'uploads' => ['required', 'array'],
-            'uploads.*.key' => ['required', 'string', 'max:255'],
+            'uploads.*.path' => ['required', 'string', 'max:255'],
             'uploads.*.size' => ['required', 'numeric'],
             'uploads.*.type' => ['required', 'string', 'max:255'],
         ];
-    }
-
-    public function withEachUpload(callable $callback): array|ValidatedInput
-    {
-        $results = [];
-
-        foreach ($this->safe()->uploads as $upload) {
-            $results[$upload['key']] = $callback($upload);
-        }
-
-        return $results;
     }
 }

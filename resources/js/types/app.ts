@@ -58,7 +58,7 @@ export type PostSummary = {
 };
 export type SignedUploadData = {
     id: number;
-    key: string;
+    path: string;
     url: string;
     headers: { [key: string]: any };
 };

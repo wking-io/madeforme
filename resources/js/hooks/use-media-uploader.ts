@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 
 type UnsignedData = {
-    key: string;
+    path: string;
     type: string;
     size: number;
 };
@@ -13,7 +13,7 @@ type SignedUpload = SignedUploadData & {
     file: File;
 };
 
-type UnsignedUpload = { key: string; file: File; state: "unsigned" };
+type UnsignedUpload = { path: string; file: File; state: "unsigned" };
 type PendingUpload = SignedUpload & { state: "pending" };
 type ProcessingUpload = SignedUpload & {
     state: "processing";
@@ -58,7 +58,7 @@ export function useMediaUploader(): {
                 ...successfulUploads,
                 ...failedUploads,
             ].reduce<UploadMap>((map, upload) => {
-                map[upload.key] = upload;
+                map[upload.path] = upload;
                 return map;
             }, {}),
         [
@@ -76,8 +76,10 @@ export function useMediaUploader(): {
 
             const unsigned = files.flatMap<UnsignedUpload>((file) => {
                 const [name, extension] = file.name.split(".");
-                const key = `${name}-${crypto.randomUUID()}.${extension}`;
-                return uploadMap[key] ? [] : [{ key, file, state: "unsigned" }];
+                const path = `${name}-${crypto.randomUUID()}.${extension}`;
+                return uploadMap[path]
+                    ? []
+                    : [{ path, file, state: "unsigned" }];
             });
 
             if (!unsigned.length) return;
@@ -104,7 +106,7 @@ export function useMediaUploader(): {
         setProcessingUploads((prev) => {
             const next = { ...prev };
             pendingQueue.forEach((upload) => {
-                next[upload.key] = {
+                next[upload.path] = {
                     ...upload,
                     state: "processing",
                     progress: 0,
@@ -114,11 +116,11 @@ export function useMediaUploader(): {
         });
 
         uploadToBucket(pendingQueue, {
-            onProgress(key, progress) {
+            onProgress(path, progress) {
                 setProcessingUploads((prev) => {
-                    const upload = prev[key];
+                    const upload = prev[path];
                     if (!upload) return prev;
-                    return { ...prev, [key]: { ...upload, progress } };
+                    return { ...prev, [path]: { ...upload, progress } };
                 });
             },
         }).then(({ successfulUploads, failedUploads }) => {
@@ -127,7 +129,7 @@ export function useMediaUploader(): {
             setProcessingUploads((prev) => {
                 const next = { ...prev };
                 [...successfulUploads, ...failedUploads].forEach((upload) => {
-                    delete next[upload.key];
+                    delete next[upload.path];
                 });
                 return next;
             });
@@ -161,7 +163,7 @@ export function useMediaUploader(): {
 const signedDataSchema = z.array(
     z.object({
         id: z.number(),
-        key: z.string(),
+        path: z.string(),
         url: z.string(),
         headers: z.record(z.any()),
     })
@@ -179,12 +181,12 @@ async function generatePresignedUrl(
                     [
                         ...uploads,
                         {
-                            key: upload.key,
+                            path: upload.path,
                             type: upload.file.type,
                             size: upload.file.size,
                         },
                     ],
-                    { ...fileMap, [upload.key]: upload.file },
+                    { ...fileMap, [upload.path]: upload.file },
                 ];
             },
             [[], {}]
@@ -195,7 +197,7 @@ async function generatePresignedUrl(
         const pendingUploads: Array<PendingUpload> = signedDataSchema
             .parse(result.data)
             .map((data) => {
-                const file = fileMap[data.key];
+                const file = fileMap[data.path];
                 return { ...data, file, state: "pending" };
             });
 
@@ -218,7 +220,7 @@ type BucketUploadReturn = {
 };
 async function uploadToBucket(
     pendingUploads: Array<PendingUpload>,
-    { onProgress }: { onProgress(key: string, progress: number): void }
+    { onProgress }: { onProgress(path: string, progress: number): void }
 ): Promise<BucketUploadReturn> {
     const results = await Promise.allSettled(
         pendingUploads.map((data) =>
@@ -233,7 +235,7 @@ async function uploadToBucket(
 
                         console.log(percentCompleted);
 
-                        onProgress(data.key, percentCompleted);
+                        onProgress(data.path, percentCompleted);
                     },
                 })
                 .then(

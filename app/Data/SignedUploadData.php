@@ -10,7 +10,7 @@ class SignedUploadData extends Data
 {
     public function __construct(
         public readonly int $id,
-        public readonly string $key,
+        public readonly string $path,
         public readonly string $url,
         /**
          * @var array<string, mixed>

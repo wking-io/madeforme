@@ -1,6 +1,6 @@
 import { Checkbox, CheckboxField } from "@/components/checkbox";
 import { Editor } from "@/components/editor";
-import { ErrorMessage as Error, Form, Label } from "@/components/form";
+import { ErrorMessage as Error, Form, Label, Legend } from "@/components/form";
 import { Input } from "@/components/input";
 import { Listbox, ListboxLabel, ListboxOption } from "@/components/listbox";
 import useForm from "@/hooks/use-form";
@@ -23,14 +23,10 @@ import {
     Fieldset,
     Input as RawInput,
     InputProps,
-    Legend,
 } from "@headlessui/react";
 import { Head } from "@inertiajs/react";
 import {
-    ChangeEventHandler,
     CSSProperties,
-    FormEventHandler,
-    HTMLInputTypeAttribute,
     MouseEventHandler,
     PropsWithChildren,
     useCallback,
@@ -39,7 +35,6 @@ import {
     useRef,
     useState,
 } from "react";
-import { set } from "zod";
 
 export default function PostCreate({
     sources,
@@ -85,18 +80,6 @@ export default function PostCreate({
                             published before they are visible to the public.
                         </p>
                     </div>
-                    <button
-                        type="button"
-                        className="group/button button isolate relative text-white pt-[3px] pb-[5px] px-5 cursor-pointer"
-                    >
-                        <span className="absolute z-[-1] bg-gradient-to-b group-active/button:from-primary-600/70 from-primary-600/30 via-primary to-primary-400/50 rounded-sm inset-0.5"></span>
-                        <span className="absolute z-[-2] bg-primary rounded-sm inset-0.5"></span>
-                        <span className="absolute z-[-3] rounded-[4px] bg-gradient-to-b from-primary-300 via-primary to-primary-600 inset-0" />
-                        <span className="absolute z-[-4] top-2 left-2 -right-2 -bottom-1 bg-foreground/20 group-active/button:-right-1 group-active/button:-bottom-0.5 group-active/button:-right-1 blur-sm" />
-                        <span className="absolute -inset-[5px] rounded-[9px] z-[-5] bg-gradient-to-br from-primary/20 to-primary/30" />
-                        <span className="absolute z-[-6] -left-[5px] -top-[5px] -bottom-[6px] -right-[6px] bg-white rounded-[8px]"></span>
-                        Save Post
-                    </button>
                 </div>
                 <div className="flex gap-12">
                     <div className="flex flex-col gap-3 flex-1">
@@ -181,7 +164,18 @@ export default function PostCreate({
                             <Error>{errors["media.*"]}</Error>
                         </Field>
                     </div>
-                    <div className="flex-1 max-w-72 flex flex-col gap-2">
+                    <div className="flex-1 max-w-72 flex flex-col gap-4 sticky top-0">
+                        <button
+                            type="button"
+                            className="mt-6 group/button button isolate relative text-white pt-[3px] pb-[5px] px-5 cursor-pointer"
+                        >
+                            <span className="absolute z-[-2] bg-gradient-to-b from-white/50 from-[1%] via-white/30 to-90% to-white/20 rounded-sm inset-0 backdrop-blur-2xl group-hover/button:from-white/60 group-hover/button:via-white/40 group-hover/button:to-white/30 transition hover:backdrop-blur-lg"></span>
+                            {/* <span className="absolute z-[-3] rounded-[4px] bg-gradient-to-b from-primary-300 via-primary to-primary-600 inset-0" /> */}
+                            {/* <span className="absolute z-[-4] top-2 left-2 -right-2 -bottom-1 bg-foreground/20 group-active/button:-right-1 group-active/button:-bottom-0.5 group-active/button:-right-1 blur-sm" /> */}
+                            <span className="absolute -inset-[1px] rounded-[3px] z-[-5] bg-mesh" />
+                            <span className="absolute left-0 top-0 -right-1.5 -bottom-1.5 rounded-[9px] z-[-6] blur-[3px] bg-mesh" />
+                            Save Post
+                        </button>
                         <PreviewField errors={errors} />
                         <PanelWrapper>
                             <Fieldset className="grid gap-1">
@@ -718,66 +712,29 @@ function MultipleUploadPreview({
                 }}
                 className="sr-only"
             />
-            <div className="flex-1">
-                {uploads.map(({ key, ...upload }) => {
-                    const selected = selectedUploads[key];
+            <div className="flex-1 flex flex-col gap-2 px-2">
+                {uploads.map((upload) => {
+                    const selected = selectedUploads[upload.path];
                     return (
                         <div
-                            key={key}
+                            key={upload.path}
                             className={cn(
-                                selected && "ring ring-primary",
+                                selected && "ring-2 ring-primary",
                                 "relative"
                             )}
                         >
-                            <div className="w-full h-full relative group/uploadPreview text-foreground">
-                                {upload.file.type.startsWith("image/") ? (
-                                    <ImagePreview file={upload.file} />
-                                ) : (
-                                    <VideoPreview file={upload.file} />
-                                )}
-                                <div
-                                    className={cn(
-                                        "absolute inset-0 p-1 flex flex-col bg-gradient-to-b from-background/50 via-background/0 to-background/0 group-hover/uploadPreview:opacity-0 pointer-events-none"
-                                    )}
-                                >
-                                    <div className="flex items-baseline justify-between">
-                                        {upload.state === "processing" ? (
-                                            <div className="flex items-center gap-1.5 text-[10px] font-mono pl-2">
-                                                <progress
-                                                    style={
-                                                        {
-                                                            "--progress-bar-bg":
-                                                                "var(--color-primary-100)",
-                                                            "--progress-bar":
-                                                                "var(--color-primary-600)",
-                                                        } as CSSProperties
-                                                    }
-                                                    className="h-1.5 rounded-full overflow-hidden"
-                                                    value={upload.progress}
-                                                    max={100}
-                                                />
-                                                <p>{upload.progress}%</p>
-                                            </div>
-                                        ) : (
-                                            <p className="font-mono text-[10px] pl-2">
-                                                {upload.file.name}
-                                            </p>
-                                        )}
-                                        <UploadStatus status={upload.state} />
-                                    </div>
-                                </div>
-                            </div>
+                            <MediaUploadPreview {...upload} />
                             {upload.state === "successful" ? (
                                 <button
                                     className="absolute inset-0"
                                     onClick={() =>
                                         setSelectedUploads((prev) => {
                                             const next = { ...prev };
-                                            const selected = prev[key];
+                                            const selected = prev[upload.path];
                                             if (selected) {
-                                                delete next[key];
+                                                delete next[upload.path];
                                             } else {
-                                                next[key] = { key, ...upload };
+                                                next[upload.path] = upload;
                                             }
                                             return next;
                                         })

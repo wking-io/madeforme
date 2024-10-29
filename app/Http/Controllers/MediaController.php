@@ -42,10 +42,10 @@ class MediaController extends Controller
         $signedData = collect([]);
 
         collect($request->uploads)->each(function ($file) use ($signedData) {
-            $key = data_get($file, 'key');
+            $path = data_get($file, 'path');
             $content_type = data_get($file, 'content_type');
 
-            ['url' => $url, 'headers' => $headers] = Storage::temporaryUploadUrl($key, now()->addMinutes(5), [
+            ['url' => $url, 'headers' => $headers] = Storage::temporaryUploadUrl($path, now()->addMinutes(5), [
                 'ACL' => 'private',
                 'ContentType' => $content_type,
                 'CacheControl' => null,
@@ -55,12 +55,12 @@ class MediaController extends Controller
             $headers['Content-Type'] = $content_type;
 
             $media = Media::create([
-                'path' => data_get($file, 'key'),
+                'path' => data_get($file, 'path'),
             ]);
 
             $signedData->push([
                 'id' => $media->id,
-                'key' => $key,
+                'path' => $path,
                 'url' => $url,
                 'headers' => $headers,
             ]);

@@ -13,35 +13,10 @@ import React, {
 } from "react";
 import { Blob } from "@/components/blob";
 import { PageProps } from "@/types";
-import { useRootCSS } from "@/hooks/use-root-css";
-
-const colors = ["pink", "blue", "green", "yellow", "purple", "red", "orange"];
-
-function getRandomPrimary(): Record<string, string> {
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    return {
-        "--color-primary-0": `var(--color-${color}-0)`,
-        "--color-primary-50": `var(--color-${color}-50)`,
-        "--color-primary-100": `var(--color-${color}-100)`,
-        "--color-primary-200": `var(--color-${color}-200)`,
-        "--color-primary-300": `var(--color-${color}-300)`,
-        "--color-primary-400": `var(--color-${color}-400)`,
-        "--color-primary-500": `var(--color-${color}-500)`,
-        "--color-primary-600": `var(--color-${color}-600)`,
-        "--color-primary-700": `var(--color-${color}-700)`,
-        "--color-primary-800": `var(--color-${color}-800)`,
-        "--color-primary-900": `var(--color-${color}-900)`,
-        "--color-primary": `var(--color-${color})`,
-        "--color-foreground": `var(--color-${color}-900)`,
-        "--color-background": `var(--color-${color}-0)`,
-    };
-}
 
 export default function Authenticated({ children }: PropsWithChildren) {
     const { auth, toasts } = usePage<PageProps>().props;
     const { user } = auth;
-
-    useRootCSS(getRandomPrimary());
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -61,7 +36,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                             <Dropdown.Trigger>
                                 <button
                                     type="button"
-                                    className="bg-primary-600 rounded-full w-12 h-12"
+                                    className="bg-mesh rounded-full w-12 h-12"
                                 >
                                     <span className="sr-only">{user.name}</span>
                                 </button>

@@ -22,6 +22,22 @@ export function ErrorMessage({
     ) : null;
 }
 
+export function Legend({
+    className,
+    ...props
+}: { className?: string } & Omit<Headless.LabelProps, "as" | "className">) {
+    return (
+        <Headless.Legend
+            data-slot="legend"
+            {...props}
+            className={cn(
+                className,
+                "select-none font-medium text-sm text-foreground-muted data-[disabled]:opacity-50"
+            )}
+        />
+    );
+}
+
 export function Label({
     className,
     ...props
