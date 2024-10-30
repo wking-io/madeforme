@@ -228,13 +228,9 @@ async function uploadToBucket(
                 .put(data.url, data.file, {
                     headers: data.headers,
                     onUploadProgress: ({ loaded, total, ...event }) => {
-                        console.log(loaded, total, event);
                         const percentCompleted = total
                             ? Math.floor((loaded / total) * 100)
                             : 0;
-
-                        console.log(percentCompleted);
-
                         onProgress(data.path, percentCompleted);
                     },
                 })

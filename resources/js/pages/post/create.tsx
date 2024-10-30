@@ -607,9 +607,15 @@ function CategoryInput({
     );
 }
 
+type DragTarget = "none" | "top" | "bottom";
+
 function MediaField() {
     const [mediaList, setMediaList] = useState<Array<SuccessfulUpload>>([]);
     const [isOpen, setIsOpen] = useState(false);
+    const [currentDragItem, setCurrentDragItem] = useState<number | null>(null);
+    const [currentDragTarget, setCurrentDragTarget] = useState<number | null>(
+        null
+    );
     return (
         <>
             <PanelWrapper>
@@ -618,22 +624,56 @@ function MediaField() {
                         Add Media
                     </button>
                     <div className="flex flex-col gap-2 mt-4">
-                        {mediaList.map(({ file }) => {
-                            return (
-                                <div className="flex gap-2 items-center">
-                                    <div className="px-2 cursor-move">
-                                        <Drag size="w-2" />
-                                    </div>
-                                    <div className="aspect-[5/3] w-32 object-cover">
-                                        {file.type.startsWith("image/") ? (
-                                            <ImagePreview file={file} />
-                                        ) : (
-                                            <VideoPreview file={file} />
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                        {mediaList.map(({ file, path, id }, index) => (
+                            <>
+                                <input
+                                    type="hidden"
+                                    name={`media[${index}]`}
+                                    value={id}
+                                />
+                                <MediaItem
+                                    file={file}
+                                    key={path}
+                                    onDragStart={() =>
+                                        setCurrentDragItem(index)
+                                    }
+                                    onDrop={(target: DragTarget) => {
+                                        setMediaList((prev) => {
+                                            if (
+                                                currentDragItem === null ||
+                                                currentDragTarget === null ||
+                                                target === "none"
+                                            )
+                                                return prev;
+
+                                            const next = [...prev];
+                                            const item = next.splice(
+                                                currentDragItem,
+                                                1
+                                            )[0];
+                                            const adjustedIndex =
+                                                currentDragItem <
+                                                currentDragTarget
+                                                    ? currentDragTarget - 1
+                                                    : currentDragTarget;
+                                            next.splice(
+                                                target === "top"
+                                                    ? adjustedIndex
+                                                    : adjustedIndex + 1,
+                                                0,
+                                                item
+                                            );
+                                            return next;
+                                        });
+                                        setCurrentDragTarget(null);
+                                        setCurrentDragItem(null);
+                                    }}
+                                    onDragEnter={() => {
+                                        setCurrentDragTarget(index);
+                                    }}
+                                />
+                            </>
+                        ))}
                     </div>
                 </Panel>
             </PanelWrapper>
@@ -671,6 +711,62 @@ function MediaField() {
                 </DialogPanel>
             </Dialog>
         </>
+    );
+}
+
+function MediaItem({
+    file,
+    onDragStart,
+    onDrop,
+    onDragEnter,
+}: {
+    file: File;
+    onDragStart: () => void;
+    onDrop: (target: DragTarget) => void;
+    onDragEnter: () => void;
+}) {
+    const [target, setTarget] = useState<DragTarget>("none");
+
+    return (
+        <div
+            className={cn(
+                target === "top" && "border-t-2 border-primary",
+                target === "bottom" && "border-b-2 border-primary",
+                "flex gap-2 items-center"
+            )}
+            draggable
+            onDragOver={(event) => {
+                event.preventDefault();
+                let rect = event.currentTarget.getBoundingClientRect();
+                let midpoint = (rect.top + rect.bottom) / 2;
+                setTarget(event.clientY <= midpoint ? "top" : "bottom");
+            }}
+            onDragLeave={() => {
+                setTarget("none");
+            }}
+            onDragEnter={(event) => {
+                event.preventDefault();
+                onDragEnter();
+            }}
+            onDragStart={onDragStart}
+            onDrop={(event) => {
+                event.stopPropagation();
+                event.preventDefault();
+                onDrop(target);
+                setTarget("none");
+            }}
+        >
+            <div className="px-2 cursor-move">
+                <Drag size="w-2" />
+            </div>
+            <div className="aspect-[5/3] w-32 object-cover">
+                {file.type.startsWith("image/") ? (
+                    <ImagePreview file={file} />
+                ) : (
+                    <VideoPreview file={file} />
+                )}
+            </div>
+        </div>
     );
 }
 
