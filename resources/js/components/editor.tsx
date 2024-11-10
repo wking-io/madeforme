@@ -100,8 +100,8 @@ export function Editor({
 
     return (
         <div id="editor-root" className="relative flex h-full flex-1 flex-col">
-            <div className="relative flex flex-1 flex-col rounded-sm border border-primary-900/30 bg-white flex flex-col focus-within:ring-2 focus-within:ring-primary-600/20 focus-within:border-primary-900/50 lg:overflow-y-auto lg:overflow-x-hidden group/editor">
-                <div className="flex shrink-0 divide-x divide-primary-900/30 group-focus-within/editor:divide-primary-900/50 overflow-y-visible border-b border-primary-900/30 group-focus-within/editor:border-primary-900/50 bg-white">
+            <div className="relative flex flex-1 flex-col rounded-sm border border-foreground/30 bg-white flex flex-col focus-within:ring-2 focus-within:ring-primary-600/20 focus-within:border-foreground/50 lg:overflow-y-auto lg:overflow-x-hidden group/editor">
+                <div className="flex shrink-0 divide-x divide-foreground/30 group-focus-within/editor:divide-foreground/50 overflow-y-visible border-b border-foreground/30 group-focus-within/editor:border-foreground/50 bg-white">
                     <div className="flex">
                         <EditorButton
                             name="Heading 1"

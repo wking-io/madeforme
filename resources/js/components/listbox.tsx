@@ -29,14 +29,14 @@ export function Listbox<T>({
                     // Basic layout
                     "group relative block w-full",
                     // Background color + shadow applied to inset pseudo element, so shadow blends with border in light mode
-                    "before:absolute before:inset-px before:rounded-[calc(var(--border-radius-sm)-1px)] before:bg-white before:shadow",
+                    "before:absolute before:inset-px before:rounded-[calc(var(--border-radius-sm)-1px)] before:bg-white",
                     // Background color is moved to control and shadow is removed in dark mode so hide `before` pseudo
                     // Hide default focus styles
                     "focus:outline-none",
                     // Focus ring
                     "after:pointer-events-none after:absolute after:inset-0 after:rounded-sm after:ring-inset after:ring-transparent after:data-[focus]:ring-2 after:data-[focus]:ring-primary-600/20",
                     // Disabled state
-                    "data-[disabled]:opacity-50 before:data-[disabled]:bg-foreground/5 before:data-[disabled]:shadow-none"
+                    "data-[disabled]:opacity-50 before:data-[disabled]:bg-foreground/5 before:data-[disabled]:shadow-none",
                 )}
             >
                 <Headless.ListboxSelectedOption
@@ -65,7 +65,7 @@ export function Listbox<T>({
                         // Invalid state
                         "group-data-[invalid]:border-red-500 group-data-[invalid]:group-data-[hover]:border-red-500",
                         // Disabled state
-                        "group-data-[disabled]:border-foreground/10 group-data-[disabled]:opacity-100"
+                        "group-data-[disabled]:border-foreground/10 group-data-[disabled]:opacity-100",
                     )}
                 />
                 <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
@@ -107,7 +107,7 @@ export function Listbox<T>({
                     // Shadows
                     "shadow-lg ring-1 ring-foreground/30",
                     // Transitions
-                    "transition-opacity duration-100 ease-in data-[transition]:pointer-events-none data-[closed]:data-[leave]:opacity-0"
+                    "transition-opacity duration-100 ease-in data-[transition]:pointer-events-none data-[closed]:data-[leave]:opacity-0",
                 )}
             >
                 {options}
@@ -132,7 +132,7 @@ export function ListboxOption<T>({
         "[&>[data-slot=icon]]:group-data-[focus]/option:text-background",
         "forced-colors:[&>[data-slot=icon]]:text-[CanvasText] forced-colors:[&>[data-slot=icon]]:group-data-[focus]/option:text-[Canvas]",
         // Avatars
-        "[&>[data-slot=avatar]]:-mx-0.5 [&>[data-slot=avatar]]:size-6 sm:[&>[data-slot=avatar]]:size-5"
+        "[&>[data-slot=avatar]]:-mx-0.5 [&>[data-slot=avatar]]:size-6 sm:[&>[data-slot=avatar]]:size-5",
     );
 
     return (
@@ -158,7 +158,7 @@ export function ListboxOption<T>({
                             // Forced colors mode
                             "forced-color-adjust-none forced-colors:data-[focus]:bg-[Highlight] forced-colors:data-[focus]:text-[HighlightText]",
                             // Disabled
-                            "data-[disabled]:opacity-50"
+                            "data-[disabled]:opacity-50",
                         )}
                     >
                         <svg
@@ -178,7 +178,7 @@ export function ListboxOption<T>({
                             className={cn(
                                 className,
                                 sharedClasses,
-                                "-mt-px mb-px col-start-2"
+                                "-mt-px mb-px col-start-2",
                             )}
                         >
                             {children}
@@ -199,7 +199,7 @@ export function ListboxLabel({
             {...props}
             className={cn(
                 className,
-                "ml-2.5 truncate first:ml-0 sm:ml-2 sm:first:ml-0"
+                "ml-2.5 truncate first:ml-0 sm:ml-2 sm:first:ml-0",
             )}
         />
     );
@@ -215,7 +215,7 @@ export function ListboxDescription({
             {...props}
             className={cn(
                 className,
-                "flex flex-1 overflow-hidden text-foreground-muted before:w-2 before:min-w-0 before:shrink group-data-[focus]/option:text-white"
+                "flex flex-1 overflow-hidden text-foreground-muted before:w-2 before:min-w-0 before:shrink group-data-[focus]/option:text-white",
             )}
         >
             <span className="flex-1 truncate">{children}</span>

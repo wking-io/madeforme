@@ -43,16 +43,18 @@ export default function PostCreate({
     sources?: Array<SourceData>;
     categories: Array<CategoryData>;
 }) {
-    const [slug, setSlug] = useState("");
+    const [title, setTitle] = useState("");
     const [showNewSource, setShowNewSource] = useState(!sources?.length);
     const { submit, errors } = useForm();
     const [newCategories, setNewCategories] = useState<Array<{ name: string }>>(
-        []
+        [],
     );
     const hasCategories = categories?.length || newCategories?.length;
     const [newCategory, setNewCategory] = useState<string | null>(
-        hasCategories ? null : EMPTY_CATEGORY
+        hasCategories ? null : EMPTY_CATEGORY,
     );
+
+    const slug = useMemo(() => slugify(title), [title]);
 
     const handleChangeSource: (value: string) => void = useCallback((value) => {
         if (value === "") {
@@ -74,7 +76,9 @@ export default function PostCreate({
             >
                 <div className="flex justify-between items-center">
                     <div className="py-2">
-                        <h2 className="font-medium text-lg">Create Post</h2>
+                        <h2 className="font-display font-medium text-lg">
+                            Create Post
+                        </h2>
                         <p className="text-sm text-foreground-muted">
                             All posts are created as drafts and need to be
                             published before they are visible to the public.
@@ -86,16 +90,14 @@ export default function PostCreate({
                         <input type="hidden" name="slug" value={slug} />
                         <Field className="grid gap-1">
                             <Label>Title</Label>
-                            <div className="rounded-sm border border-primary-900/30 bg-white flex flex-col focus-within:ring-2 focus-within:ring-primary-600/20 focus-within:border-primary-900/50">
+                            <div className="rounded-sm border border-foreground/30 bg-white flex flex-col focus-within:ring-2 focus-within:ring-primary-600/20 focus-within:border-foreground/50">
                                 <RawInput
                                     type="text"
                                     name="title"
                                     className="border-none py-1 px-2 focus:outline-none"
-                                    onChange={(e) =>
-                                        setSlug(slugify(e.target.value))
-                                    }
+                                    onChange={(e) => setTitle(e.target.value)}
                                 />
-                                <p className="bg-primary-600/10 text-primary-700 font-mono text-xs py-1 px-2">
+                                <p className="bg-foreground/5 text-primary-700 font-mono text-xs py-1 px-2">
                                     {slug.length
                                         ? slug
                                         : "Start typing to see slug"}
@@ -112,6 +114,7 @@ export default function PostCreate({
                             <Error>{errors["description"]}</Error>
                         </Field>
                         <Field>
+                            <Label>Source</Label>
                             <Listbox
                                 onChange={handleChangeSource}
                                 name="source[id]"
@@ -156,6 +159,86 @@ export default function PostCreate({
                                 </div>
                             </Fieldset>
                         ) : null}
+                        <Fieldset className="grid gap-1">
+                            {categories.length ? (
+                                <>
+                                    <Legend className="font-medium px-2">
+                                        Categories
+                                    </Legend>
+                                    <Panel className="p-2 overflow-auto max-h-[308px] grid gap-1">
+                                        {categories?.map((category, index) => (
+                                            <CategoryInput
+                                                value={category.id}
+                                                label={category.name}
+                                                index={index}
+                                            />
+                                        ))}
+                                        {newCategories?.map(
+                                            (category, index) => (
+                                                <CategoryInput
+                                                    label={category.name}
+                                                    index={
+                                                        categories.length +
+                                                        index
+                                                    }
+                                                    defaultChecked
+                                                />
+                                            ),
+                                        )}
+                                    </Panel>
+                                </>
+                            ) : null}
+                            {newCategory !== null || !hasCategories ? (
+                                <Panel>
+                                    <Field className="grid gap-1">
+                                        <Label htmlFor="new-category">
+                                            New Category
+                                        </Label>
+                                        <div className="flex gap-1">
+                                            <Input
+                                                type="text"
+                                                id="new-category"
+                                                value={newCategory ?? ""}
+                                                onChange={(e) =>
+                                                    setNewCategory(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            />
+                                            <button
+                                                type="button"
+                                                className="bg-foreground/20 hover:bg-foreground-muted pt-[3px] pb-[5px] px-4 cursor-pointer rounded-sm text-sm min-w-32"
+                                                onClick={() => {
+                                                    if (newCategory?.length) {
+                                                        setNewCategories(
+                                                            (categories) => [
+                                                                ...categories,
+                                                                {
+                                                                    name: newCategory,
+                                                                },
+                                                            ],
+                                                        );
+                                                        setNewCategory(null);
+                                                    }
+                                                }}
+                                            >
+                                                Add New
+                                            </button>
+                                        </div>
+                                    </Field>
+                                </Panel>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setNewCategory(EMPTY_CATEGORY)
+                                    }
+                                    className="bg-foreground text-background hover:bg-foreground-muted pt-[3px] pb-[5px] px-4 cursor-pointer rounded text-sm mt-1"
+                                >
+                                    Add New
+                                </button>
+                            )}
+                        </Fieldset>
 
                         <Field>
                             <Label>Media</Label>
@@ -165,6 +248,7 @@ export default function PostCreate({
                         </Field>
                     </div>
                     <div className="flex-1 max-w-72 flex flex-col gap-4 sticky top-0">
+                        <PreviewField errors={errors} />
                         <button
                             type="button"
                             className="mt-6 group/button button isolate relative text-white pt-[3px] pb-[5px] px-5 cursor-pointer"
@@ -176,78 +260,6 @@ export default function PostCreate({
                             <span className="absolute left-0 top-0 -right-1.5 -bottom-1.5 rounded-[9px] z-[-6] blur-[3px] bg-mesh" />
                             Save Post
                         </button>
-                        <PreviewField errors={errors} />
-                        <PanelWrapper>
-                            <Fieldset className="grid gap-1">
-                                <Legend className="font-medium px-2">
-                                    Categories
-                                </Legend>
-                                <Panel className="p-2 overflow-auto max-h-[308px] grid gap-1">
-                                    {categories?.map((category, index) => (
-                                        <CategoryInput
-                                            value={category.id}
-                                            label={category.name}
-                                            index={index}
-                                        />
-                                    ))}
-                                    {newCategories?.map((category, index) => (
-                                        <CategoryInput
-                                            label={category.name}
-                                            index={categories.length + index}
-                                            defaultChecked
-                                        />
-                                    ))}
-                                </Panel>
-                                {newCategory !== null || !hasCategories ? (
-                                    <Panel className="p-2">
-                                        <Field className="grid gap-1">
-                                            <Label htmlFor="new-category">
-                                                New Category
-                                            </Label>
-                                            <Input
-                                                type="text"
-                                                id="new-category"
-                                                value={newCategory ?? ""}
-                                                onChange={(e) =>
-                                                    setNewCategory(
-                                                        e.target.value
-                                                    )
-                                                }
-                                            />
-                                            <button
-                                                type="button"
-                                                className="bg-foreground text-background hover:bg-foreground-muted pt-[3px] pb-[5px] px-4 cursor-pointer rounded text-sm mt-1"
-                                                onClick={() => {
-                                                    if (newCategory?.length) {
-                                                        setNewCategories(
-                                                            (categories) => [
-                                                                ...categories,
-                                                                {
-                                                                    name: newCategory,
-                                                                },
-                                                            ]
-                                                        );
-                                                        setNewCategory(null);
-                                                    }
-                                                }}
-                                            >
-                                                Add New
-                                            </button>
-                                        </Field>
-                                    </Panel>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setNewCategory(EMPTY_CATEGORY)
-                                        }
-                                        className="bg-foreground text-background hover:bg-foreground-muted pt-[3px] pb-[5px] px-4 cursor-pointer rounded text-sm mt-1"
-                                    >
-                                        Add New
-                                    </button>
-                                )}
-                            </Fieldset>
-                        </PanelWrapper>
                     </div>
                 </div>
             </Form>
@@ -257,10 +269,10 @@ export default function PostCreate({
 
 function PreviewField({ errors }: { errors: Record<string, string> }) {
     const [previewImage, setPreviewImage] = useState<SuccessfulUpload | null>(
-        null
+        null,
     );
     const [previewVideo, setPreviewVideo] = useState<SuccessfulUpload | null>(
-        null
+        null,
     );
     const [isOpen, setIsOpen] = useState(false);
 
@@ -345,14 +357,6 @@ function PreviewField({ errors }: { errors: Record<string, string> }) {
     );
 }
 
-function PanelWrapper({ children }: PropsWithChildren) {
-    return (
-        <div className="w-full rounded-md p-1 isolate before:absolute relative before:-inset-px before:bg-gradient-to-br before:from-primary-300/60 before:via-primary-200/80 before:to-primary-300/60 before:z-[-2] after:absolute after:inset-0 after:bg-primary-50/70 before:rounded-[7px] after:rounded-md after:z-[-1]">
-            {children}
-        </div>
-    );
-}
-
 function Panel({ children, className }: PropsWithChildren<PropsWithClassName>) {
     return (
         <div className={cn(className, "bg-background rounded")}>{children}</div>
@@ -361,11 +365,9 @@ function Panel({ children, className }: PropsWithChildren<PropsWithClassName>) {
 
 function PreviewWrapper({ children }: PropsWithChildren) {
     return (
-        <PanelWrapper>
-            <div className="relative w-full h-full bg-primary-200 rounded aspect-[5/3] text-primary-700 cursor-pointer overflow-hidden">
-                {children}
-            </div>
-        </PanelWrapper>
+        <div className="relative w-full h-full bg-foreground/20 rounded aspect-[5/3] text-primary-700 cursor-pointer overflow-hidden">
+            {children}
+        </div>
     );
 }
 
@@ -395,7 +397,7 @@ function UploadPreview({
             )}
             <div
                 className={cn(
-                    "absolute inset-0 p-1 flex flex-col bg-gradient-to-b from-background/50 via-background/0 to-background/0 group-hover/uploadPreview:opacity-0 pointer-events-none"
+                    "absolute inset-0 p-1 flex flex-col bg-gradient-to-b from-background/50 via-background/0 to-background/0 group-hover/uploadPreview:opacity-0 pointer-events-none",
                 )}
             >
                 <div className="flex items-baseline justify-between">
@@ -554,7 +556,7 @@ function VideoPreview({ file }: { file: File }) {
 
 function SourceField({ children }: PropsWithChildren) {
     return (
-        <Field className="rounded-sm border border-primary-900/30 bg-white flex focus-within:ring-2 focus-within:ring-primary-600/20 focus-within:border-primary-900/50 flex-1">
+        <Field className="rounded-sm border border-foreground/30 bg-white flex focus-within:ring-2 focus-within:ring-primary-600/20 focus-within:border-foreground/50 flex-1">
             {children}
         </Field>
     );
@@ -614,69 +616,64 @@ function MediaField() {
     const [isOpen, setIsOpen] = useState(false);
     const [currentDragItem, setCurrentDragItem] = useState<number | null>(null);
     const [currentDragTarget, setCurrentDragTarget] = useState<number | null>(
-        null
+        null,
     );
     return (
         <>
-            <PanelWrapper>
-                <Panel>
-                    <button type="button" onClick={() => setIsOpen(true)}>
-                        Add Media
-                    </button>
-                    <div className="flex flex-col gap-2 mt-4">
-                        {mediaList.map(({ file, path, id }, index) => (
-                            <>
-                                <input
-                                    type="hidden"
-                                    name={`media[${index}]`}
-                                    value={id}
-                                />
-                                <MediaItem
-                                    file={file}
-                                    key={path}
-                                    onDragStart={() =>
-                                        setCurrentDragItem(index)
-                                    }
-                                    onDrop={(target: DragTarget) => {
-                                        setMediaList((prev) => {
-                                            if (
-                                                currentDragItem === null ||
-                                                currentDragTarget === null ||
-                                                target === "none"
-                                            )
-                                                return prev;
+            <Panel>
+                <button type="button" onClick={() => setIsOpen(true)}>
+                    Add Media
+                </button>
+                <div className="flex flex-col gap-2 mt-4">
+                    {mediaList.map(({ file, path, id }, index) => (
+                        <>
+                            <input
+                                type="hidden"
+                                name={`media[${index}]`}
+                                value={id}
+                            />
+                            <MediaItem
+                                file={file}
+                                key={path}
+                                onDragStart={() => setCurrentDragItem(index)}
+                                onDrop={(target: DragTarget) => {
+                                    setMediaList((prev) => {
+                                        if (
+                                            currentDragItem === null ||
+                                            currentDragTarget === null ||
+                                            target === "none"
+                                        )
+                                            return prev;
 
-                                            const next = [...prev];
-                                            const item = next.splice(
-                                                currentDragItem,
-                                                1
-                                            )[0];
-                                            const adjustedIndex =
-                                                currentDragItem <
-                                                currentDragTarget
-                                                    ? currentDragTarget - 1
-                                                    : currentDragTarget;
-                                            next.splice(
-                                                target === "top"
-                                                    ? adjustedIndex
-                                                    : adjustedIndex + 1,
-                                                0,
-                                                item
-                                            );
-                                            return next;
-                                        });
-                                        setCurrentDragTarget(null);
-                                        setCurrentDragItem(null);
-                                    }}
-                                    onDragEnter={() => {
-                                        setCurrentDragTarget(index);
-                                    }}
-                                />
-                            </>
-                        ))}
-                    </div>
-                </Panel>
-            </PanelWrapper>
+                                        const next = [...prev];
+                                        const item = next.splice(
+                                            currentDragItem,
+                                            1,
+                                        )[0];
+                                        const adjustedIndex =
+                                            currentDragItem < currentDragTarget
+                                                ? currentDragTarget - 1
+                                                : currentDragTarget;
+                                        next.splice(
+                                            target === "top"
+                                                ? adjustedIndex
+                                                : adjustedIndex + 1,
+                                            0,
+                                            item,
+                                        );
+                                        return next;
+                                    });
+                                    setCurrentDragTarget(null);
+                                    setCurrentDragItem(null);
+                                }}
+                                onDragEnter={() => {
+                                    setCurrentDragTarget(index);
+                                }}
+                            />
+                        </>
+                    ))}
+                </div>
+            </Panel>
             <Dialog
                 open={isOpen}
                 onClose={() => setIsOpen(false)}
@@ -732,7 +729,7 @@ function MediaItem({
             className={cn(
                 target === "top" && "border-t-2 border-primary",
                 target === "bottom" && "border-b-2 border-primary",
-                "flex gap-2 items-center"
+                "flex gap-2 items-center",
             )}
             draggable
             onDragOver={(event) => {
@@ -816,7 +813,7 @@ function MultipleUploadPreview({
                             key={upload.path}
                             className={cn(
                                 selected && "ring-2 ring-primary",
-                                "relative"
+                                "relative",
                             )}
                         >
                             <MediaUploadPreview {...upload} />
@@ -860,7 +857,7 @@ function MediaUploadPreview(upload: Upload) {
             )}
             <div
                 className={cn(
-                    "absolute inset-0 p-1 flex flex-col bg-gradient-to-b from-background/50 via-background/0 to-background/0 group-hover/uploadPreview:opacity-0 pointer-events-none"
+                    "absolute inset-0 p-1 flex flex-col bg-gradient-to-b from-background/50 via-background/0 to-background/0 group-hover/uploadPreview:opacity-0 pointer-events-none",
                 )}
             >
                 <div className="flex items-baseline justify-between">
@@ -946,3 +943,18 @@ function slugify(text: string): string {
 function mergeErrors(errors: Record<string, string>, keys: string[]): string {
     return keys.flatMap((key) => (errors[key] ? [errors[key]] : [])).join(". ");
 }
+
+const previewArt = `
+╔════════════════╗
+║░░░░░░░░░░░░░░░░║
+║░░░░░░╒══╕░░░░░░║
+║░░░░╒══════╕░░░░║
+║░░░░│•╓──╖⌝│░░░░║
+║░░░░│ ║  ║ │░░░░║
+║░░░░│ ╙──╜⌟│░░░░║
+║░░░░╘══════╛░░░░║
+║░░░░░░░░░░░░░░░░║
+╟────────────────╢
+║                ║
+╚════════════════╝
+`;

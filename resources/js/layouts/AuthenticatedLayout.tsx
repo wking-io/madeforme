@@ -25,7 +25,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
         <div className="bg-background text-foreground min-h-screen flex">
             <nav className="p-4 sm:p-6 flex flex-col gap-8 justify-between">
                 <Link href="/" className="">
-                    <Logo className="block w-12 h-auto ml-1.5" />
+                    <Logo className="block w-[58px] h-auto" />
                 </Link>
 
                 <Nav />
